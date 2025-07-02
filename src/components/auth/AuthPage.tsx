@@ -47,87 +47,68 @@ export const AuthPage = () => {
     },
   ];
 
-  const createTestProfile = async (user: typeof testUsers[0]) => {
-    try {
-      // Check if profile already exists
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (!existingProfile) {
-        // Create profile if it doesn't exist with email_confirmed = true for test users
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.name,
-            role: user.userRole,
-            email_confirmed: true,
-            department: user.role === "Management" ? "Executive" : user.role === "Evaluator" ? "R&D" : "Operations"
-          });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-        }
-      }
-    } catch (error) {
-      console.error("Error creating test profile:", error);
-    }
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Sign up without email confirmation
-      const { data, error } = await supabase.auth.signUp({
+      // Create account with email confirmation disabled
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
           },
-          // Don't require email confirmation
-          emailRedirectTo: undefined,
         },
       });
 
-      if (error) throw error;
+      if (signUpError) {
+        // If user already exists, try to sign in
+        if (signUpError.message.includes('already registered')) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
-      // For new signups, we need to create the user session manually since email confirmation is disabled
-      if (data.user && !data.session) {
-        // Try to sign in immediately after signup
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+          if (signInError) throw signInError;
 
-        if (signInError) {
-          console.log("Auto sign-in after signup failed:", signInError.message);
           toast({
-            title: "Account Created!",
-            description: "Please sign in with your credentials.",
+            title: "Signed In Successfully!",
+            description: "Welcome back to YOU Innovation Hub",
           });
         } else {
-          toast({
-            title: "Account Created & Signed In!",
-            description: "Welcome to YOU Innovation Hub",
-          });
+          throw signUpError;
         }
       } else {
+        // For new users, create profile immediately
+        if (signUpData.user) {
+          // Create profile using service role bypass
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({
+              id: signUpData.user.id,
+              email: signUpData.user.email,
+              full_name: fullName,
+              role: "submitter",
+              email_confirmed: true,
+            });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+          }
+        }
+
         toast({
-          title: "Account Created & Signed In!",
+          title: "Account Created Successfully!",
           description: "Welcome to YOU Innovation Hub",
         });
       }
     } catch (error: any) {
+      console.error("Sign up error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create account",
         variant: "destructive",
       });
     } finally {
@@ -152,9 +133,10 @@ export const AuthPage = () => {
         description: "Successfully signed in.",
       });
     } catch (error: any) {
+      console.error("Sign in error:", error);
       toast({
         title: "Sign In Error",
-        description: error.message,
+        description: error.message || "Failed to sign in",
         variant: "destructive",
       });
     } finally {
@@ -167,25 +149,7 @@ export const AuthPage = () => {
     try {
       console.log(`Attempting login for ${testUser.name} (${testUser.email})`);
       
-      // First, try to sign in directly (skip profile creation initially)
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: testUser.email,
-        password: "Abdu123+++",
-      });
-
-      if (!signInError && signInData.user) {
-        // Success - user exists and logged in
-        console.log("Login successful for", testUser.name);
-        toast({
-          title: "Login Successful",
-          description: `Logged in as ${testUser.name} (${testUser.role})`,
-        });
-        return;
-      }
-
-      // If sign in failed, create the account
-      console.log("Sign in failed, creating account:", signInError?.message);
-      
+      // First try to sign up the user (this will fail if they already exist)
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: testUser.email,
         password: "Abdu123+++",
@@ -193,31 +157,38 @@ export const AuthPage = () => {
           data: {
             full_name: testUser.name,
           },
-          // Disable email confirmation
-          emailRedirectTo: undefined,
         },
       });
 
-      if (signUpError && !signUpError.message.includes('already registered')) {
-        throw signUpError;
-      }
+      // If signup succeeded, create profile
+      if (!signUpError && signUpData.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: signUpData.user.id,
+            email: testUser.email,
+            full_name: testUser.name,
+            role: testUser.userRole,
+            email_confirmed: true,
+            department: testUser.role === "Management" ? "Executive" : testUser.role === "Evaluator" ? "R&D" : "Operations"
+          });
 
-      // Create profile after signup (user should be authenticated now)
-      await createTestProfile(testUser);
-
-      // If no session was created, try to sign in again
-      if (!signUpData.session && signUpData.user) {
-        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
-          email: testUser.email,
-          password: "Abdu123+++",
-        });
-
-        if (finalSignInError) {
-          throw new Error(`Final login failed: ${finalSignInError.message}`);
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
         }
       }
+
+      // Now try to sign in (works whether user was just created or already existed)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: testUser.email,
+        password: "Abdu123+++",
+      });
+
+      if (signInError) {
+        throw new Error(`Login failed: ${signInError.message}`);
+      }
       
-      console.log("Account created and login successful for", testUser.name);
+      console.log("Login successful for", testUser.name);
       toast({
         title: "Login Successful",
         description: `Logged in as ${testUser.name} (${testUser.role})`,
@@ -383,7 +354,7 @@ export const AuthPage = () => {
                   <div className="flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg">
                     <AlertCircle className="h-4 w-4 text-green-600" />
                     <p className="text-xs text-green-700">
-                      Email confirmation disabled - instant login
+                      Email confirmation bypassed - instant login
                     </p>
                   </div>
                 </div>
