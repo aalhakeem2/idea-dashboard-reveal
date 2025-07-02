@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ export const AuthPage = () => {
             email: user.email,
             full_name: user.name,
             role: user.userRole,
-            email_confirmed: true, // Set to true for test users
+            email_confirmed: true,
             department: user.role === "Management" ? "Executive" : user.role === "Evaluator" ? "R&D" : "Operations"
           });
 
@@ -83,11 +84,11 @@ export const AuthPage = () => {
     setLoading(true);
 
     try {
+      // Disable email confirmation by setting emailRedirectTo to null
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
           },
@@ -96,21 +97,22 @@ export const AuthPage = () => {
 
       if (error) throw error;
 
-      // For regular signups, try to sign in immediately (skipping email confirmation for testing)
+      // Immediately try to sign in after signup (bypassing email confirmation)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (!signInError) {
+      if (signInError) {
+        console.log("Auto sign-in failed:", signInError.message);
         toast({
-          title: "Account Created & Signed In!",
-          description: "Welcome to YOU Innovation Hub",
+          title: "Account Created!",
+          description: "Please sign in with your credentials.",
         });
       } else {
         toast({
-          title: "Account Created!",
-          description: "Please check your email for confirmation (if required).",
+          title: "Account Created & Signed In!",
+          description: "Welcome to YOU Innovation Hub",
         });
       }
     } catch (error: any) {
@@ -135,9 +137,14 @@ export const AuthPage = () => {
       });
 
       if (error) throw error;
+
+      toast({
+        title: "Welcome back!",
+        description: "Successfully signed in.",
+      });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Sign In Error",
         description: error.message,
         variant: "destructive",
       });
@@ -163,12 +170,11 @@ export const AuthPage = () => {
       if (signInError) {
         console.log("Sign in failed, attempting to create account:", signInError.message);
         
-        // If sign in fails, create the account first
+        // If sign in fails, create the account first (without email confirmation)
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: testUser.email,
           password: "Abdu123+++",
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: testUser.name,
             },
@@ -182,9 +188,7 @@ export const AuthPage = () => {
         // Create profile after signup
         await createTestProfile(testUser);
 
-        // Wait a moment then try to sign in again
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        // Try to sign in again immediately
         const { error: secondSignInError } = await supabase.auth.signInWithPassword({
           email: testUser.email,
           password: "Abdu123+++",
@@ -226,12 +230,11 @@ export const AuthPage = () => {
       });
 
       if (signInError) {
-        // If sign in fails, create the account
+        // If sign in fails, create the account without email confirmation
         const { error: signUpError } = await supabase.auth.signUp({
           email: "test@you.com",
           password: "Abdu123+++",
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: "Test User",
             },
@@ -245,9 +248,7 @@ export const AuthPage = () => {
         // Create the profile manually
         await createTestProfile(testUser);
 
-        // Wait and try signing in again
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        // Try signing in again immediately
         const { error: secondSignInError } = await supabase.auth.signInWithPassword({
           email: "test@you.com",
           password: "Abdu123+++",
@@ -415,10 +416,10 @@ export const AuthPage = () => {
                       </Button>
                     ))}
                   </div>
-                  <div className="flex items-center space-x-2 mt-3 p-2 bg-blue-50 rounded-lg">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <p className="text-xs text-blue-700">
-                      All accounts have email confirmation bypassed for testing
+                  <div className="flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-green-600" />
+                    <p className="text-xs text-green-700">
+                      Email confirmation disabled - instant login
                     </p>
                   </div>
                 </div>
@@ -466,6 +467,12 @@ export const AuthPage = () => {
                     {loading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
+                <div className="flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg">
+                  <AlertCircle className="h-4 w-4 text-green-600" />
+                  <p className="text-xs text-green-700">
+                    No email confirmation required - instant access
+                  </p>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
