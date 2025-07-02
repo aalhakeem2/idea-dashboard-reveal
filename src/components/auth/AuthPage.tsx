@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -84,7 +83,7 @@ export const AuthPage = () => {
     setLoading(true);
 
     try {
-      // Disable email confirmation by setting emailRedirectTo to null
+      // Sign up without email confirmation
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -92,23 +91,33 @@ export const AuthPage = () => {
           data: {
             full_name: fullName,
           },
+          // Don't require email confirmation
+          emailRedirectTo: undefined,
         },
       });
 
       if (error) throw error;
 
-      // Immediately try to sign in after signup (bypassing email confirmation)
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        console.log("Auto sign-in failed:", signInError.message);
-        toast({
-          title: "Account Created!",
-          description: "Please sign in with your credentials.",
+      // For new signups, we need to create the user session manually since email confirmation is disabled
+      if (data.user && !data.session) {
+        // Try to sign in immediately after signup
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
+
+        if (signInError) {
+          console.log("Auto sign-in after signup failed:", signInError.message);
+          toast({
+            title: "Account Created!",
+            description: "Please sign in with your credentials.",
+          });
+        } else {
+          toast({
+            title: "Account Created & Signed In!",
+            description: "Welcome to YOU Innovation Hub",
+          });
+        }
       } else {
         toast({
           title: "Account Created & Signed In!",
@@ -158,49 +167,57 @@ export const AuthPage = () => {
     try {
       console.log(`Attempting login for ${testUser.name} (${testUser.email})`);
       
-      // First create the test profile
-      await createTestProfile(testUser);
-
-      // Try to sign in directly
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      // First, try to sign in directly (skip profile creation initially)
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: testUser.email,
         password: "Abdu123+++",
       });
 
-      if (signInError) {
-        console.log("Sign in failed, attempting to create account:", signInError.message);
-        
-        // If sign in fails, create the account first (without email confirmation)
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: testUser.email,
-          password: "Abdu123+++",
-          options: {
-            data: {
-              full_name: testUser.name,
-            },
+      if (!signInError && signInData.user) {
+        // Success - user exists and logged in
+        console.log("Login successful for", testUser.name);
+        toast({
+          title: "Login Successful",
+          description: `Logged in as ${testUser.name} (${testUser.role})`,
+        });
+        return;
+      }
+
+      // If sign in failed, create the account
+      console.log("Sign in failed, creating account:", signInError?.message);
+      
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: testUser.email,
+        password: "Abdu123+++",
+        options: {
+          data: {
+            full_name: testUser.name,
           },
-        });
+          // Disable email confirmation
+          emailRedirectTo: undefined,
+        },
+      });
 
-        if (signUpError && !signUpError.message.includes('already registered')) {
-          throw signUpError;
-        }
+      if (signUpError && !signUpError.message.includes('already registered')) {
+        throw signUpError;
+      }
 
-        // Create profile after signup
-        await createTestProfile(testUser);
+      // Create profile after signup (user should be authenticated now)
+      await createTestProfile(testUser);
 
-        // Try to sign in again immediately
-        const { error: secondSignInError } = await supabase.auth.signInWithPassword({
+      // If no session was created, try to sign in again
+      if (!signUpData.session && signUpData.user) {
+        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
           email: testUser.email,
           password: "Abdu123+++",
         });
 
-        if (secondSignInError) {
-          console.error("Second sign in failed:", secondSignInError);
-          throw new Error(`Login failed: ${secondSignInError.message}`);
+        if (finalSignInError) {
+          throw new Error(`Final login failed: ${finalSignInError.message}`);
         }
       }
       
-      console.log("Login successful for", testUser.name);
+      console.log("Account created and login successful for", testUser.name);
       toast({
         title: "Login Successful",
         description: `Logged in as ${testUser.name} (${testUser.role})`,
@@ -218,61 +235,8 @@ export const AuthPage = () => {
   };
 
   const handleQuickAccess = async () => {
-    setLoading(true);
-    try {
-      // Create test user profile first
-      const testUser = testUsers.find(u => u.email === "test@you.com")!;
-      await createTestProfile(testUser);
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: "test@you.com",
-        password: "Abdu123+++",
-      });
-
-      if (signInError) {
-        // If sign in fails, create the account without email confirmation
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: "test@you.com",
-          password: "Abdu123+++",
-          options: {
-            data: {
-              full_name: "Test User",
-            },
-          },
-        });
-
-        if (signUpError && !signUpError.message.includes('already registered')) {
-          throw signUpError;
-        }
-
-        // Create the profile manually
-        await createTestProfile(testUser);
-
-        // Try signing in again immediately
-        const { error: secondSignInError } = await supabase.auth.signInWithPassword({
-          email: "test@you.com",
-          password: "Abdu123+++",
-        });
-
-        if (secondSignInError) {
-          throw new Error("Account created but login failed. Please try again.");
-        }
-      }
-      
-      toast({
-        title: "Quick Access Successful",
-        description: "Logged in successfully",
-      });
-    } catch (error: any) {
-      console.error("Quick access error:", error);
-      toast({
-        title: "Quick Access Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    const testUser = testUsers.find(u => u.email === "test@you.com")!;
+    await handleTestLogin(testUser);
   };
 
   return (
