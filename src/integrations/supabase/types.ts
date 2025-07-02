@@ -182,6 +182,7 @@ export type Database = {
           created_at: string | null
           department: string | null
           email: string | null
+          email_confirmed: boolean | null
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -191,6 +192,7 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email?: string | null
+          email_confirmed?: boolean | null
           full_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -200,6 +202,7 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email?: string | null
+          email_confirmed?: boolean | null
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]

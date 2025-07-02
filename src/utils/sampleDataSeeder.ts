@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -27,21 +26,24 @@ export const seedSampleData = async () => {
         email: 'submitter@you.com',
         full_name: 'Hani Gazim',
         role: 'submitter' as const,
-        department: 'Operations'
+        department: 'Operations',
+        email_confirmed: true
       },
       {
         id: '22222222-2222-2222-2222-222222222222',
         email: 'evaluator@you.com',
         full_name: 'Abdurhman Alhakeem',
         role: 'evaluator' as const,
-        department: 'R&D'
+        department: 'R&D',
+        email_confirmed: true
       },
       {
         id: '33333333-3333-3333-3333-333333333333',
         email: 'management@you.com',
         full_name: 'Osama Murshed',
         role: 'management' as const,
-        department: 'Executive'
+        department: 'Executive',
+        email_confirmed: true
       }
     ];
 

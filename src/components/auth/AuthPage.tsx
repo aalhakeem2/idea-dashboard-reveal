@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,7 @@ export const AuthPage = () => {
         .single();
 
       if (!existingProfile) {
-        // Create profile if it doesn't exist - removed email_confirmed field
+        // Create profile if it doesn't exist with email_confirmed = true for test users
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
@@ -66,6 +65,7 @@ export const AuthPage = () => {
             email: user.email,
             full_name: user.name,
             role: user.userRole,
+            email_confirmed: true, // Set to true for test users
             department: user.role === "Management" ? "Executive" : user.role === "Evaluator" ? "R&D" : "Operations"
           });
 
@@ -96,7 +96,7 @@ export const AuthPage = () => {
 
       if (error) throw error;
 
-      // Auto-confirm email for testing by attempting to sign in immediately
+      // For regular signups, try to sign in immediately (skipping email confirmation for testing)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -178,6 +178,9 @@ export const AuthPage = () => {
         if (signUpError && !signUpError.message.includes('already registered')) {
           throw signUpError;
         }
+
+        // Create profile after signup
+        await createTestProfile(testUser);
 
         // Wait a moment then try to sign in again
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -415,7 +418,7 @@ export const AuthPage = () => {
                   <div className="flex items-center space-x-2 mt-3 p-2 bg-blue-50 rounded-lg">
                     <AlertCircle className="h-4 w-4 text-blue-600" />
                     <p className="text-xs text-blue-700">
-                      All accounts will be created automatically with proper roles
+                      All accounts have email confirmation bypassed for testing
                     </p>
                   </div>
                 </div>
@@ -462,9 +465,6 @@ export const AuthPage = () => {
                   <Button type="submit" className="w-full h-12 bg-gray-800 hover:bg-gray-900 font-medium" disabled={loading}>
                     {loading ? "Creating account..." : "Create Account"}
                   </Button>
-                  <p className="text-xs text-gray-500 text-center">
-                    Email confirmation is automatically handled for testing
-                  </p>
                 </form>
               </TabsContent>
             </Tabs>
