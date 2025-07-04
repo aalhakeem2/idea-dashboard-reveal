@@ -10,7 +10,9 @@ import { EvaluatorDashboard } from "./EvaluatorDashboard";
 import { ManagementDashboard } from "./ManagementDashboard";
 import { ProfileSetup } from "./ProfileSetup";
 import { useToast } from "@/hooks/use-toast";
-import { seedSampleData } from "@/utils/sampleDataSeeder";
+import { seedSampleData, forceSeedSampleData } from "@/utils/sampleDataSeeder";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Database } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 
@@ -21,6 +23,7 @@ interface DashboardProps {
 export const Dashboard = ({ user }: DashboardProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
   const { toast } = useToast();
 
@@ -42,11 +45,12 @@ export const Dashboard = ({ user }: DashboardProps) => {
 
       setProfile(data);
 
-      // Seed sample data if this is a test user and profile exists
+      // Automatically seed sample data when profile is loaded
       if (data && data.role) {
+        console.log("Profile loaded, attempting to seed sample data...");
         setTimeout(() => {
           seedSampleData();
-        }, 1000);
+        }, 500);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -62,6 +66,26 @@ export const Dashboard = ({ user }: DashboardProps) => {
 
   const handleProfileUpdate = (updatedProfile: Profile) => {
     setProfile(updatedProfile);
+  };
+
+  const handleForceSeed = async () => {
+    setSeeding(true);
+    try {
+      await forceSeedSampleData();
+      toast({
+        title: "Success",
+        description: "Sample data has been seeded successfully!",
+      });
+    } catch (error) {
+      console.error("Error seeding data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to seed sample data",
+        variant: "destructive",
+      });
+    } finally {
+      setSeeding(false);
+    }
   };
 
   if (loading) {
@@ -99,6 +123,24 @@ export const Dashboard = ({ user }: DashboardProps) => {
       <div className="flex-1 flex flex-col">
         <Header profile={profile} />
         <main className="flex-1 p-6">
+          {/* Sample Data Seeding Button */}
+          <div className="mb-4 flex justify-end">
+            <Button
+              onClick={handleForceSeed}
+              disabled={seeding}
+              variant="outline"
+              size="sm"
+              className="flex items-center space-x-2"
+            >
+              {seeding ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Database className="h-4 w-4" />
+              )}
+              <span>{seeding ? "Seeding..." : "Seed Sample Data"}</span>
+            </Button>
+          </div>
+          
           {renderDashboard()}
         </main>
       </div>

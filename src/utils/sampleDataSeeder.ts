@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -6,18 +7,24 @@ type IdeaStatus = Database["public"]["Enums"]["idea_status"];
 
 export const seedSampleData = async () => {
   try {
+    console.log("Starting sample data seeding process...");
+    
     // Check if sample data already exists
-    const { data: existingIdeas } = await supabase
+    const { data: existingIdeas, error: checkError } = await supabase
       .from("ideas")
       .select("id")
       .limit(1);
 
+    if (checkError) {
+      console.error("Error checking existing ideas:", checkError);
+    }
+
     if (existingIdeas && existingIdeas.length > 0) {
-      console.log("Sample data already exists");
+      console.log("Sample data already exists, skipping seeding");
       return;
     }
 
-    console.log("Seeding sample data...");
+    console.log("No existing data found, proceeding with seeding...");
 
     // Ensure test user profiles exist first
     const testUsers = [
@@ -44,29 +51,48 @@ export const seedSampleData = async () => {
         role: 'management' as const,
         department: 'Executive',
         email_confirmed: true
+      },
+      {
+        id: '44444444-4444-4444-4444-444444444444',
+        email: 'test@you.com',
+        full_name: 'Test User',
+        role: 'management' as const,
+        department: 'Executive',
+        email_confirmed: true
       }
     ];
 
     // Create test user profiles if they don't exist
+    console.log("Creating test user profiles...");
     for (const user of testUsers) {
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: profileCheckError } = await supabase
         .from("profiles")
         .select("id")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
+
+      if (profileCheckError) {
+        console.error("Error checking profile:", profileCheckError);
+      }
 
       if (!existingProfile) {
+        console.log(`Creating profile for ${user.full_name}`);
         const { error: profileError } = await supabase
           .from("profiles")
-          .insert(user);
+          .upsert(user, { onConflict: 'id' });
         
         if (profileError) {
           console.error("Error creating test profile:", profileError);
+        } else {
+          console.log(`Successfully created profile for ${user.full_name}`);
         }
+      } else {
+        console.log(`Profile already exists for ${user.full_name}`);
       }
     }
 
     // Add sample ideas with proper typing
+    console.log("Creating sample ideas...");
     const sampleIdeas = [
       {
         id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
@@ -138,7 +164,10 @@ export const seedSampleData = async () => {
       return;
     }
 
+    console.log("Sample ideas created successfully");
+
     // Add sample evaluations
+    console.log("Creating sample evaluations...");
     const sampleEvaluations = [
       {
         id: 'eval-aaa-1111',
@@ -206,7 +235,10 @@ export const seedSampleData = async () => {
       return;
     }
 
+    console.log("Sample evaluations created successfully");
+
     // Add sample comments
+    console.log("Creating sample comments...");
     const sampleComments = [
       {
         id: 'comm-aaa-1',
@@ -267,8 +299,26 @@ export const seedSampleData = async () => {
       return;
     }
 
+    console.log("Sample comments created successfully");
     console.log("Sample data seeded successfully!");
   } catch (error) {
     console.error("Error seeding sample data:", error);
+  }
+};
+
+// Force seed function that clears existing data first
+export const forceSeedSampleData = async () => {
+  try {
+    console.log("Force seeding - clearing existing data first...");
+    
+    // Delete in reverse order due to foreign key constraints
+    await supabase.from("idea_comments").delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from("evaluations").delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from("ideas").delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    console.log("Existing data cleared, proceeding with fresh seeding...");
+    await seedSampleData();
+  } catch (error) {
+    console.error("Error force seeding sample data:", error);
   }
 };
