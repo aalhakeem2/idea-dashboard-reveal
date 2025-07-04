@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,7 +52,7 @@ export const AuthPage = () => {
     setLoading(true);
 
     try {
-      // Create account with email confirmation disabled
+      // Create account without email confirmation
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -61,6 +60,7 @@ export const AuthPage = () => {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: undefined, // Disable email confirmation
         },
       });
 
@@ -82,27 +82,9 @@ export const AuthPage = () => {
           throw signUpError;
         }
       } else {
-        // For new users, create profile immediately
-        if (signUpData.user) {
-          // Create profile using service role bypass
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .upsert({
-              id: signUpData.user.id,
-              email: signUpData.user.email,
-              full_name: fullName,
-              role: "submitter",
-              email_confirmed: true,
-            });
-
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          }
-        }
-
         toast({
           title: "Account Created Successfully!",
-          description: "Welcome to YOU Innovation Hub",
+          description: "Welcome to YOU Innovation Hub - you can start using the app immediately!",
         });
       }
     } catch (error: any) {
@@ -150,43 +132,58 @@ export const AuthPage = () => {
     try {
       console.log(`Attempting login for ${testUser.name} (${testUser.email})`);
       
-      // First try to sign up the user (this will fail if they already exist)
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: testUser.email,
-        password: "Abdu123+++",
-        options: {
-          data: {
-            full_name: testUser.name,
-          },
-        },
-      });
-
-      // If signup succeeded, create profile
-      if (!signUpError && signUpData.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({
-            id: signUpData.user.id,
-            email: testUser.email,
-            full_name: testUser.name,
-            role: testUser.userRole,
-            email_confirmed: true,
-            department: testUser.role === "Management" ? "Executive" : testUser.role === "Evaluator" ? "R&D" : "Operations"
-          });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-        }
-      }
-
-      // Now try to sign in (works whether user was just created or already existed)
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Try to sign in first
+      let { error: signInError } = await supabase.auth.signInWithPassword({
         email: testUser.email,
         password: "Abdu123+++",
       });
 
+      // If sign in fails, create the user
       if (signInError) {
-        throw new Error(`Login failed: ${signInError.message}`);
+        console.log("User doesn't exist, creating...");
+        
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: testUser.email,
+          password: "Abdu123+++",
+          options: {
+            data: {
+              full_name: testUser.name,
+            },
+            emailRedirectTo: undefined, // Disable email confirmation
+          },
+        });
+
+        if (signUpError) {
+          throw new Error(`Failed to create user: ${signUpError.message}`);
+        }
+
+        // Create profile immediately
+        if (signUpData.user) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({
+              id: signUpData.user.id,
+              email: testUser.email,
+              full_name: testUser.name,
+              role: testUser.userRole,
+              email_confirmed: true,
+              department: testUser.role === "Management" ? "Executive" : testUser.role === "Evaluator" ? "R&D" : "Operations"
+            });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+          }
+        }
+
+        // Now sign in
+        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
+          email: testUser.email,
+          password: "Abdu123+++",
+        });
+
+        if (finalSignInError) {
+          throw new Error(`Final login failed: ${finalSignInError.message}`);
+        }
       }
       
       console.log("Login successful for", testUser.name);
@@ -219,8 +216,8 @@ export const AuthPage = () => {
       
       console.log("Browse as Admin: Starting admin login process");
       
-      // Try to sign in first to see if user already exists
-      let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      // Try to sign in first
+      let { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail,
         password: adminPassword,
       });
@@ -229,7 +226,7 @@ export const AuthPage = () => {
       if (signInError) {
         console.log("Admin user doesn't exist, creating...");
         
-        // Create the user with admin credentials
+        // Create the user with admin credentials - no email confirmation
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: adminEmail,
           password: adminPassword,
@@ -237,17 +234,18 @@ export const AuthPage = () => {
             data: {
               full_name: "Browse Admin",
             },
-            emailRedirectTo: undefined // Disable email confirmation
+            emailRedirectTo: undefined, // Disable email confirmation
           },
         });
 
         if (signUpError) {
-          console.error("Signup error:", signUpError);
           throw new Error(`Failed to create admin user: ${signUpError.message}`);
         }
 
         if (signUpData.user) {
-          // Force create profile with admin privileges
+          console.log("Admin user created, setting up profile...");
+          
+          // Create profile with admin privileges
           const { error: profileError } = await supabase
             .from("profiles")
             .upsert({
@@ -257,30 +255,29 @@ export const AuthPage = () => {
               role: "management",
               email_confirmed: true,
               department: "Executive"
-            }, {
-              onConflict: "id"
             });
 
           if (profileError) {
             console.error("Profile creation error:", profileError);
+            // Continue anyway - the user might still be created
           }
+        }
 
-          // Now sign in with the created user
-          const { error: finalSignInError } = await supabase.auth.signInWithPassword({
-            email: adminEmail,
-            password: adminPassword,
-          });
+        // Try to sign in again after creating the user
+        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
+          email: adminEmail,
+          password: adminPassword,
+        });
 
-          if (finalSignInError) {
-            throw new Error(`Final login failed: ${finalSignInError.message}`);
-          }
+        if (finalSignInError) {
+          throw new Error(`Admin login failed: ${finalSignInError.message}`);
         }
       }
       
       console.log("Browse as Admin: Login successful");
       toast({
         title: "Browse Mode Active",
-        description: "Browsing with full admin privileges",
+        description: "Browsing with full admin privileges - email confirmation bypassed",
       });
     } catch (error: any) {
       console.error("Browse as Admin error:", error);
