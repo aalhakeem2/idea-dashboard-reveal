@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Users, BarChart3, Zap, TestTube, AlertCircle } from "lucide-react";
+import { Lightbulb, Users, BarChart3, Zap, TestTube, AlertCircle, UserCog } from "lucide-react";
 
 export const AuthPage = () => {
   const [loading, setLoading] = useState(false);
@@ -210,8 +210,83 @@ export const AuthPage = () => {
     await handleTestLogin(testUser);
   };
 
+  const handleBrowseAsAdmin = async () => {
+    setLoading(true);
+    try {
+      const adminUser = testUsers.find(u => u.userRole === "management")!;
+      console.log(`Browse as Admin: Logging in as ${adminUser.name}`);
+      
+      // First try to create/upsert the user
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: adminUser.email,
+        password: "Abdu123+++",
+        options: {
+          data: {
+            full_name: adminUser.name,
+          },
+        },
+      });
+
+      // Create/update profile
+      if (!signUpError && signUpData.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: signUpData.user.id,
+            email: adminUser.email,
+            full_name: adminUser.name,
+            role: adminUser.userRole,
+            email_confirmed: true,
+            department: "Executive"
+          });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+        }
+      }
+
+      // Sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: adminUser.email,
+        password: "Abdu123+++",
+      });
+
+      if (signInError) {
+        throw new Error(`Login failed: ${signInError.message}`);
+      }
+      
+      console.log("Browse as Admin: Login successful");
+      toast({
+        title: "Browse Mode Active",
+        description: `Browsing as ${adminUser.name} (Management)`,
+      });
+    } catch (error: any) {
+      console.error("Browse as Admin error:", error);
+      toast({
+        title: "Browse Error",
+        description: error.message || "Failed to enter browse mode",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-gray-50 flex items-center justify-center p-4">
+      {/* Browse as Admin Button - Top Right Corner */}
+      <div className="fixed top-4 right-4 z-50">
+        <Button
+          onClick={handleBrowseAsAdmin}
+          disabled={loading}
+          className="bg-you-purple hover:bg-you-purple/90 text-white font-medium shadow-lg"
+          size="sm"
+        >
+          <UserCog className="h-4 w-4 mr-2" />
+          {loading ? "Loading..." : "Browse as Admin"}
+        </Button>
+      </div>
+
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         {/* Hero Section */}
         <div className="space-y-6 text-gray-800">
