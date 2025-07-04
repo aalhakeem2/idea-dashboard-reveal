@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -213,52 +214,73 @@ export const AuthPage = () => {
   const handleBrowseAsAdmin = async () => {
     setLoading(true);
     try {
-      const adminUser = testUsers.find(u => u.userRole === "management")!;
-      console.log(`Browse as Admin: Logging in as ${adminUser.name}`);
+      const adminEmail = "admin@browse.com";
+      const adminPassword = "Browse123Admin";
       
-      // First try to create/upsert the user
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: adminUser.email,
-        password: "Abdu123+++",
-        options: {
-          data: {
-            full_name: adminUser.name,
-          },
-        },
+      console.log("Browse as Admin: Starting admin login process");
+      
+      // Try to sign in first to see if user already exists
+      let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
+        password: adminPassword,
       });
 
-      // Create/update profile
-      if (!signUpError && signUpData.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({
-            id: signUpData.user.id,
-            email: adminUser.email,
-            full_name: adminUser.name,
-            role: adminUser.userRole,
-            email_confirmed: true,
-            department: "Executive"
+      // If sign in fails, create the user
+      if (signInError) {
+        console.log("Admin user doesn't exist, creating...");
+        
+        // Create the user with admin credentials
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: adminEmail,
+          password: adminPassword,
+          options: {
+            data: {
+              full_name: "Browse Admin",
+            },
+            emailRedirectTo: undefined // Disable email confirmation
+          },
+        });
+
+        if (signUpError) {
+          console.error("Signup error:", signUpError);
+          throw new Error(`Failed to create admin user: ${signUpError.message}`);
+        }
+
+        if (signUpData.user) {
+          // Force create profile with admin privileges
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({
+              id: signUpData.user.id,
+              email: adminEmail,
+              full_name: "Browse Admin",
+              role: "management",
+              email_confirmed: true,
+              department: "Executive"
+            }, {
+              onConflict: "id"
+            });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+          }
+
+          // Now sign in with the created user
+          const { error: finalSignInError } = await supabase.auth.signInWithPassword({
+            email: adminEmail,
+            password: adminPassword,
           });
 
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
+          if (finalSignInError) {
+            throw new Error(`Final login failed: ${finalSignInError.message}`);
+          }
         }
-      }
-
-      // Sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: adminUser.email,
-        password: "Abdu123+++",
-      });
-
-      if (signInError) {
-        throw new Error(`Login failed: ${signInError.message}`);
       }
       
       console.log("Browse as Admin: Login successful");
       toast({
         title: "Browse Mode Active",
-        description: `Browsing as ${adminUser.name} (Management)`,
+        description: "Browsing with full admin privileges",
       });
     } catch (error: any) {
       console.error("Browse as Admin error:", error);
