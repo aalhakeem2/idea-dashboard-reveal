@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -52,7 +53,9 @@ export const AuthPage = () => {
     setLoading(true);
 
     try {
-      // Create account without email confirmation
+      console.log("Starting sign up process...");
+      
+      // Create account - no email confirmation needed
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -60,13 +63,18 @@ export const AuthPage = () => {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: undefined, // Disable email confirmation
+          // Completely disable email confirmation
+          emailRedirectTo: undefined,
         },
       });
 
       if (signUpError) {
-        // If user already exists, try to sign in
-        if (signUpError.message.includes('already registered')) {
+        console.error("Sign up error:", signUpError);
+        
+        // If user already exists, try to sign in instead
+        if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
+          console.log("User already exists, attempting sign in...");
+          
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -82,13 +90,14 @@ export const AuthPage = () => {
           throw signUpError;
         }
       } else {
+        console.log("Sign up successful:", signUpData);
         toast({
           title: "Account Created Successfully!",
           description: "Welcome to YOU Innovation Hub - you can start using the app immediately!",
         });
       }
     } catch (error: any) {
-      console.error("Sign up error:", error);
+      console.error("Authentication error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create account",
@@ -104,6 +113,8 @@ export const AuthPage = () => {
     setLoading(true);
 
     try {
+      console.log("Starting sign in process...");
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -111,6 +122,7 @@ export const AuthPage = () => {
 
       if (error) throw error;
 
+      console.log("Sign in successful");
       toast({
         title: "Welcome back!",
         description: "Successfully signed in.",
@@ -149,7 +161,8 @@ export const AuthPage = () => {
             data: {
               full_name: testUser.name,
             },
-            emailRedirectTo: undefined, // Disable email confirmation
+            // Disable email confirmation completely
+            emailRedirectTo: undefined,
           },
         });
 
@@ -157,23 +170,11 @@ export const AuthPage = () => {
           throw new Error(`Failed to create user: ${signUpError.message}`);
         }
 
-        // Create profile immediately
-        if (signUpData.user) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .upsert({
-              id: signUpData.user.id,
-              email: testUser.email,
-              full_name: testUser.name,
-              role: testUser.userRole,
-              email_confirmed: true,
-              department: testUser.role === "Management" ? "Executive" : testUser.role === "Evaluator" ? "R&D" : "Operations"
-            });
+        console.log("User created successfully, setting up profile...");
 
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          }
-        }
+        // The profile should be created automatically by the trigger
+        // Let's wait a moment and then sign in
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Now sign in
         const { error: finalSignInError } = await supabase.auth.signInWithPassword({
@@ -212,21 +213,20 @@ export const AuthPage = () => {
     setLoading(true);
     try {
       const adminEmail = "admin@browse.com";
-      const adminPassword = "Browse123Admin";
+      const adminPassword = "BrowseAdmin123";
       
       console.log("Browse as Admin: Starting admin login process");
       
-      // Try to sign in first
-      let { error: signInError } = await supabase.auth.signInWithPassword({
+      // First try to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail,
         password: adminPassword,
       });
 
-      // If sign in fails, create the user
       if (signInError) {
-        console.log("Admin user doesn't exist, creating...");
+        console.log("Admin user doesn't exist, creating admin account...");
         
-        // Create the user with admin credentials - no email confirmation
+        // Create admin user with no email confirmation
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: adminEmail,
           password: adminPassword,
@@ -234,50 +234,41 @@ export const AuthPage = () => {
             data: {
               full_name: "Browse Admin",
             },
-            emailRedirectTo: undefined, // Disable email confirmation
+            // Completely disable email confirmation
+            emailRedirectTo: undefined,
           },
         });
 
         if (signUpError) {
+          console.error("Admin creation error:", signUpError);
+          
+          // If user already exists but password is wrong, show specific error
+          if (signUpError.message.includes('already registered')) {
+            throw new Error("Admin account exists but password is incorrect. Please contact support.");
+          }
+          
           throw new Error(`Failed to create admin user: ${signUpError.message}`);
         }
 
-        if (signUpData.user) {
-          console.log("Admin user created, setting up profile...");
-          
-          // Create profile with admin privileges
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .upsert({
-              id: signUpData.user.id,
-              email: adminEmail,
-              full_name: "Browse Admin",
-              role: "management",
-              email_confirmed: true,
-              department: "Executive"
-            });
+        console.log("Admin user created successfully");
 
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-            // Continue anyway - the user might still be created
-          }
-        }
+        // Wait for profile creation and then try to sign in
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Try to sign in again after creating the user
         const { error: finalSignInError } = await supabase.auth.signInWithPassword({
           email: adminEmail,
           password: adminPassword,
         });
 
         if (finalSignInError) {
-          throw new Error(`Admin login failed: ${finalSignInError.message}`);
+          throw new Error(`Admin login failed after creation: ${finalSignInError.message}`);
         }
       }
       
       console.log("Browse as Admin: Login successful");
       toast({
         title: "Browse Mode Active",
-        description: "Browsing with full admin privileges - email confirmation bypassed",
+        description: "Browsing with full admin privileges - instant access granted!",
       });
     } catch (error: any) {
       console.error("Browse as Admin error:", error);
@@ -448,7 +439,7 @@ export const AuthPage = () => {
                   <div className="flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg">
                     <AlertCircle className="h-4 w-4 text-green-600" />
                     <p className="text-xs text-green-700">
-                      Email confirmation bypassed - instant login
+                      Email confirmation completely disabled - instant login
                     </p>
                   </div>
                 </div>
@@ -499,7 +490,7 @@ export const AuthPage = () => {
                 <div className="flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg">
                   <AlertCircle className="h-4 w-4 text-green-600" />
                   <p className="text-xs text-green-700">
-                    No email confirmation required - instant access
+                    No email confirmation required - instant access granted
                   </p>
                 </div>
               </TabsContent>
