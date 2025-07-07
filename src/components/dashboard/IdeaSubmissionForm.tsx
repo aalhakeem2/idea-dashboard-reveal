@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Lightbulb } from "lucide-react";
 
 type Profile = Tables<"profiles">;
@@ -29,6 +30,7 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
     strategic_alignment_score: "",
   });
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +51,7 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: t('common', 'success'),
         description: "Your idea has been submitted successfully!",
       });
 
@@ -66,7 +68,7 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
     } catch (error) {
       console.error("Error submitting idea:", error);
       toast({
-        title: "Error",
+        title: t('common', 'error'),
         description: "Failed to submit idea",
         variant: "destructive",
       });
@@ -83,34 +85,44 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
-          <div className="flex items-center space-x-2">
+          <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
             <Lightbulb className="h-6 w-6 text-blue-600" />
-            <CardTitle>Submit New Idea</CardTitle>
+            <CardTitle className={isRTL ? 'text-right' : 'text-left'}>
+              {t('idea_form', 'submit_new_idea')}
+            </CardTitle>
           </div>
-          <CardDescription>
-            Share your innovative idea with the evaluation team
+          <CardDescription className={isRTL ? 'text-right' : 'text-left'}>
+            {t('idea_form', 'share_innovative_idea')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="title">Idea Title *</Label>
+              <Label htmlFor="title" className={isRTL ? 'text-right block' : 'text-left'}>
+                {t('idea_form', 'idea_title')} *
+              </Label>
               <Input
                 id="title"
-                placeholder="Enter a compelling title for your idea"
+                placeholder={t('idea_form', 'title_placeholder')}
                 value={formData.title}
                 onChange={(e) => handleChange("title", e.target.value)}
+                className={isRTL ? 'text-right' : 'text-left'}
+                dir={isRTL ? 'rtl' : 'ltr'}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
+              <Label htmlFor="description" className={isRTL ? 'text-right block' : 'text-left'}>
+                {t('idea_form', 'description')} *
+              </Label>
               <Textarea
                 id="description"
-                placeholder="Describe your idea in detail, including the problem it solves and proposed solution"
+                placeholder={t('idea_form', 'description_placeholder')}
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
+                className={isRTL ? 'text-right' : 'text-left'}
+                dir={isRTL ? 'rtl' : 'ltr'}
                 rows={6}
                 required
               />
@@ -118,30 +130,34 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category" className={isRTL ? 'text-right block' : 'text-left'}>
+                  {t('idea_form', 'category')} *
+                </Label>
                 <Select value={formData.category} onValueChange={(value) => handleChange("category", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                  <SelectTrigger className={isRTL ? 'text-right' : 'text-left'}>
+                    <SelectValue placeholder={t('idea_form', 'select_category')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="innovation">Innovation</SelectItem>
-                    <SelectItem value="process_improvement">Process Improvement</SelectItem>
-                    <SelectItem value="cost_reduction">Cost Reduction</SelectItem>
-                    <SelectItem value="customer_experience">Customer Experience</SelectItem>
-                    <SelectItem value="technology">Technology</SelectItem>
-                    <SelectItem value="sustainability">Sustainability</SelectItem>
+                    <SelectItem value="innovation">{t('categories', 'innovation')}</SelectItem>
+                    <SelectItem value="process_improvement">{t('categories', 'process_improvement')}</SelectItem>
+                    <SelectItem value="cost_reduction">{t('categories', 'cost_reduction')}</SelectItem>
+                    <SelectItem value="customer_experience">{t('categories', 'customer_experience')}</SelectItem>
+                    <SelectItem value="technology">{t('categories', 'technology')}</SelectItem>
+                    <SelectItem value="sustainability">{t('categories', 'sustainability')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="strategic_alignment_score">Strategic Alignment (1-10)</Label>
+                <Label htmlFor="strategic_alignment_score" className={isRTL ? 'text-right block' : 'text-left'}>
+                  {t('idea_form', 'strategic_alignment')}
+                </Label>
                 <Select 
                   value={formData.strategic_alignment_score} 
                   onValueChange={(value) => handleChange("strategic_alignment_score", value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Rate alignment" />
+                  <SelectTrigger className={isRTL ? 'text-right' : 'text-left'}>
+                    <SelectValue placeholder={t('idea_form', 'rate_alignment')} />
                   </SelectTrigger>
                   <SelectContent>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
@@ -156,31 +172,39 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="implementation_cost">Implementation Cost ($)</Label>
+                <Label htmlFor="implementation_cost" className={isRTL ? 'text-right block' : 'text-left'}>
+                  {t('idea_form', 'implementation_cost')}
+                </Label>
                 <Input
                   id="implementation_cost"
                   type="number"
-                  placeholder="Estimated cost"
+                  placeholder={t('idea_form', 'estimated_cost')}
                   value={formData.implementation_cost}
                   onChange={(e) => handleChange("implementation_cost", e.target.value)}
+                  className={isRTL ? 'text-right' : 'text-left'}
+                  dir="ltr" // Keep numbers LTR
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="expected_roi">Expected ROI (%)</Label>
+                <Label htmlFor="expected_roi" className={isRTL ? 'text-right block' : 'text-left'}>
+                  {t('idea_form', 'expected_roi')}
+                </Label>
                 <Input
                   id="expected_roi"
                   type="number"
-                  placeholder="Expected return"
+                  placeholder={t('idea_form', 'expected_return')}
                   value={formData.expected_roi}
                   onChange={(e) => handleChange("expected_roi", e.target.value)}
+                  className={isRTL ? 'text-right' : 'text-left'}
+                  dir="ltr" // Keep numbers LTR
                 />
               </div>
             </div>
 
-            <div className="flex space-x-4">
+            <div className={`flex space-x-4 ${isRTL ? 'space-x-reverse' : ''}`}>
               <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? "Submitting..." : "Submit Idea"}
+                {loading ? t('idea_form', 'submitting') : t('idea_form', 'submit_idea')}
               </Button>
               <Button 
                 type="button" 
@@ -193,7 +217,7 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
                   });
                 }}
               >
-                Save as Draft
+                {t('idea_form', 'save_as_draft')}
               </Button>
             </div>
           </form>

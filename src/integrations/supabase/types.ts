@@ -210,6 +210,36 @@ export type Database = {
         }
         Relationships: []
       }
+      translations: {
+        Row: {
+          arabic_text: string
+          created_at: string | null
+          english_text: string
+          id: string
+          interface_name: string
+          position_key: string
+          updated_at: string | null
+        }
+        Insert: {
+          arabic_text: string
+          created_at?: string | null
+          english_text: string
+          id?: string
+          interface_name: string
+          position_key: string
+          updated_at?: string | null
+        }
+        Update: {
+          arabic_text?: string
+          created_at?: string | null
+          english_text?: string
+          id?: string
+          interface_name?: string
+          position_key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
