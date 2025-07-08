@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lightbulb, Users, BarChart3, Zap, TestTube, AlertCircle, UserCog } from "lucide-react";
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const AuthPage = () => {
   const [loading, setLoading] = useState(false);
@@ -15,6 +17,7 @@ export const AuthPage = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
 
   // Test user accounts with roles
   const testUsers = [
@@ -283,65 +286,70 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50 flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Language Switcher - Top Left Corner */}
+      <div className={`fixed top-4 z-50 ${isRTL ? 'right-4' : 'left-4'}`}>
+        <LanguageSwitcher />
+      </div>
+
       {/* Browse as Admin Button - Top Right Corner */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className={`fixed top-4 z-50 ${isRTL ? 'left-4' : 'right-4'}`}>
         <Button
           onClick={handleBrowseAsAdmin}
           disabled={loading}
           className="bg-you-purple hover:bg-you-purple/90 text-white font-medium shadow-lg"
           size="sm"
         >
-          <UserCog className="h-4 w-4 mr-2" />
-          {loading ? "Loading..." : "Browse as Admin"}
+          <UserCog className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          {loading ? t('auth', 'loading') : t('auth', 'browse_as_admin')}
         </Button>
       </div>
 
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         {/* Hero Section */}
-        <div className="space-y-6 text-gray-800">
+        <div className={`space-y-6 text-gray-800 ${isRTL ? 'text-right' : 'text-left'}`}>
           <div className="space-y-4">
-            <div className="flex items-center space-x-3">
+            <div className={`flex items-center space-x-3 ${isRTL ? 'space-x-reverse' : ''}`}>
               <div className="p-2 bg-you-accent rounded-xl border border-you-accent">
                 <Zap className="h-8 w-8 text-you-purple" />
               </div>
               <h1 className="text-4xl font-bold font-poppins text-gray-900">
-                YOU Innovation Hub
+                {t('auth', 'app_title')}
               </h1>
             </div>
             <p className="text-xl text-gray-600 font-light">
-              Transform ideas into reality with our comprehensive innovation management platform
+              {t('auth', 'app_description')}
             </p>
           </div>
           
           <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center space-x-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
+            <div className={`flex items-center space-x-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm ${isRTL ? 'space-x-reverse' : ''}`}>
               <div className="p-2 bg-you-orange rounded-lg">
                 <Lightbulb className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Submit & Track Ideas</h3>
-                <p className="text-sm text-gray-600">Share innovative thoughts and monitor progress</p>
+                <h3 className="font-semibold text-gray-900">{t('auth', 'feature_submit_title')}</h3>
+                <p className="text-sm text-gray-600">{t('auth', 'feature_submit_desc')}</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
+            <div className={`flex items-center space-x-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm ${isRTL ? 'space-x-reverse' : ''}`}>
               <div className="p-2 bg-you-green rounded-lg">
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Collaborative Evaluation</h3>
-                <p className="text-sm text-gray-600">Expert review and strategic alignment assessment</p>
+                <h3 className="font-semibold text-gray-900">{t('auth', 'feature_evaluation_title')}</h3>
+                <p className="text-sm text-gray-600">{t('auth', 'feature_evaluation_desc')}</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
+            <div className={`flex items-center space-x-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm ${isRTL ? 'space-x-reverse' : ''}`}>
               <div className="p-2 bg-you-blue rounded-lg">
                 <BarChart3 className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Analytics & Insights</h3>
-                <p className="text-sm text-gray-600">Data-driven decisions and performance tracking</p>
+                <h3 className="font-semibold text-gray-900">{t('auth', 'feature_analytics_title')}</h3>
+                <p className="text-sm text-gray-600">{t('auth', 'feature_analytics_desc')}</p>
               </div>
             </div>
           </div>
@@ -350,46 +358,48 @@ export const AuthPage = () => {
         {/* Auth Form */}
         <Card className="w-full max-w-md mx-auto shadow-xl border border-gray-200">
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl font-poppins text-gray-900">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl font-poppins text-gray-900">{t('auth', 'welcome_back')}</CardTitle>
             <CardDescription className="text-base text-gray-600">
-              Sign in to your account or create a new one
+              {t('auth', 'signin_description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin" className="font-medium">Sign In</TabsTrigger>
-                <TabsTrigger value="signup" className="font-medium">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin" className="font-medium">{t('auth', 'sign_in')}</TabsTrigger>
+                <TabsTrigger value="signup" className="font-medium">{t('auth', 'sign_up')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="font-medium">Email</Label>
+                    <Label htmlFor="email" className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('auth', 'email')}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t('auth', 'email_placeholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12"
+                      className={`h-12 ${isRTL ? 'text-right' : 'text-left'}`}
+                      dir={isRTL ? 'rtl' : 'ltr'}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="font-medium">Password</Label>
+                    <Label htmlFor="password" className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('auth', 'password')}</Label>
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder={t('auth', 'password_placeholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12"
+                      className={`h-12 ${isRTL ? 'text-right' : 'text-left'}`}
+                      dir={isRTL ? 'rtl' : 'ltr'}
                       required
                     />
                   </div>
                   <Button type="submit" className="w-full h-12 bg-gray-800 hover:bg-gray-900 font-medium" disabled={loading}>
-                    {loading ? "Signing in..." : "Sign In"}
+                    {loading ? t('auth', 'signing_in') : t('auth', 'sign_in')}
                   </Button>
                 </form>
 
@@ -400,97 +410,100 @@ export const AuthPage = () => {
                     className="w-full h-12 bg-you-purple hover:bg-you-purple/90 font-medium"
                     disabled={loading}
                   >
-                    {loading ? "Accessing..." : "Quick Access"}
+                    {loading ? t('auth', 'accessing') : t('auth', 'quick_access')}
                   </Button>
                   <p className="text-xs text-gray-500 text-center mt-2">
-                    One-click testing access
+                    {t('auth', 'quick_access_desc')}
                   </p>
                 </div>
 
                 {/* Test Users Section */}
-                <div className="mt-6 pt-6 border-t">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium text-sm text-gray-600">Test Different Roles</h4>
-                    <TestTube className="h-4 w-4 text-gray-400" />
-                  </div>
+                  <div className="mt-6 pt-6 border-t">
+                    <div className={`flex items-center justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <h4 className="font-medium text-sm text-gray-600">{t('auth', 'test_roles')}</h4>
+                      <TestTube className="h-4 w-4 text-gray-400" />
+                    </div>
                   <div className="space-y-2">
                     {testUsers.map((user, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className="w-full justify-start h-auto p-3 text-left border-gray-200 hover:bg-gray-50"
-                        onClick={() => handleTestLogin(user)}
-                        disabled={loading}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-3 h-3 rounded-full ${
-                            user.role === 'Submitter' ? 'bg-you-blue' : 
-                            user.role === 'Evaluator' ? 'bg-you-green' : 
-                            user.role === 'Management' ? 'bg-you-orange' : 'bg-you-purple'
-                          }`}></div>
-                          <div>
-                            <div className="font-medium text-sm text-gray-900">{user.name}</div>
-                            <div className="text-xs text-gray-500">{user.role}</div>
+                        <Button
+                          key={index}
+                          variant="outline"
+                          className={`w-full h-auto p-3 border-gray-200 hover:bg-gray-50 ${isRTL ? 'justify-end text-right' : 'justify-start text-left'}`}
+                          onClick={() => handleTestLogin(user)}
+                          disabled={loading}
+                        >
+                          <div className={`flex items-center space-x-3 ${isRTL ? 'space-x-reverse' : ''}`}>
+                            <div className={`w-3 h-3 rounded-full ${
+                              user.role === 'Submitter' ? 'bg-you-blue' : 
+                              user.role === 'Evaluator' ? 'bg-you-green' : 
+                              user.role === 'Management' ? 'bg-you-orange' : 'bg-you-purple'
+                            }`}></div>
+                            <div>
+                              <div className="font-medium text-sm text-gray-900">{user.name}</div>
+                              <div className="text-xs text-gray-500">{user.role}</div>
+                            </div>
                           </div>
-                        </div>
-                      </Button>
+                        </Button>
                     ))}
                   </div>
-                  <div className="flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg">
-                    <AlertCircle className="h-4 w-4 text-green-600" />
-                    <p className="text-xs text-green-700">
-                      Email confirmation completely disabled - instant login
-                    </p>
-                  </div>
+                    <div className={`flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg ${isRTL ? 'space-x-reverse' : ''}`}>
+                      <AlertCircle className="h-4 w-4 text-green-600" />
+                      <p className="text-xs text-green-700">
+                        {t('auth', 'email_confirmation_disabled')}
+                      </p>
+                    </div>
                 </div>
               </TabsContent>
               
               <TabsContent value="signup" className="space-y-4">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="font-medium">Full Name</Label>
+                    <Label htmlFor="fullName" className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('auth', 'full_name')}</Label>
                     <Input
                       id="fullName"
                       type="text"
-                      placeholder="Enter your full name"
+                      placeholder={t('auth', 'full_name_placeholder')}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="h-12"
+                      className={`h-12 ${isRTL ? 'text-right' : 'text-left'}`}
+                      dir={isRTL ? 'rtl' : 'ltr'}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="font-medium">Email</Label>
+                    <Label htmlFor="email" className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('auth', 'email')}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t('auth', 'email_placeholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12"
+                      className={`h-12 ${isRTL ? 'text-right' : 'text-left'}`}
+                      dir={isRTL ? 'rtl' : 'ltr'}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="font-medium">Password</Label>
+                    <Label htmlFor="password" className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('auth', 'password')}</Label>
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Create a password"
+                      placeholder={t('auth', 'create_password_placeholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12"
+                      className={`h-12 ${isRTL ? 'text-right' : 'text-left'}`}
+                      dir={isRTL ? 'rtl' : 'ltr'}
                       required
                     />
                   </div>
                   <Button type="submit" className="w-full h-12 bg-gray-800 hover:bg-gray-900 font-medium" disabled={loading}>
-                    {loading ? "Creating account..." : "Create Account"}
+                    {loading ? t('auth', 'creating_account') : t('auth', 'create_account')}
                   </Button>
                 </form>
-                <div className="flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg">
+                <div className={`flex items-center space-x-2 mt-3 p-2 bg-green-50 rounded-lg ${isRTL ? 'space-x-reverse' : ''}`}>
                   <AlertCircle className="h-4 w-4 text-green-600" />
                   <p className="text-xs text-green-700">
-                    No email confirmation required - instant access granted
+                    {t('auth', 'no_email_confirmation')}
                   </p>
                 </div>
               </TabsContent>
