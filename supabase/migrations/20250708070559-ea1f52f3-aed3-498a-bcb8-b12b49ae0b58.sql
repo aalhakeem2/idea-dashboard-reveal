@@ -1,0 +1,37 @@
+-- Add auth page translations
+INSERT INTO public.translations (interface_name, position_key, english_text, arabic_text) VALUES
+  -- Auth page translations
+  ('auth', 'app_title', 'YOU Innovation Hub', 'مركز الابتكار أنت'),
+  ('auth', 'app_description', 'Transform ideas into reality with our comprehensive innovation management platform', 'حول الأفكار إلى واقع مع منصة إدارة الابتكار الشاملة'),
+  ('auth', 'browse_as_admin', 'Browse as Admin', 'تصفح كمسؤول'),
+  ('auth', 'loading', 'Loading...', 'جاري التحميل...'),
+  ('auth', 'welcome_back', 'Welcome Back', 'مرحباً بعودتك'),
+  ('auth', 'signin_description', 'Sign in to your account or create a new one', 'سجل دخولك إلى حسابك أو أنشئ حساباً جديداً'),
+  ('auth', 'sign_in', 'Sign In', 'تسجيل الدخول'),
+  ('auth', 'sign_up', 'Sign Up', 'إنشاء حساب'),
+  ('auth', 'email', 'Email', 'البريد الإلكتروني'),
+  ('auth', 'password', 'Password', 'كلمة المرور'),
+  ('auth', 'full_name', 'Full Name', 'الاسم الكامل'),
+  ('auth', 'email_placeholder', 'Enter your email', 'أدخل بريدك الإلكتروني'),
+  ('auth', 'password_placeholder', 'Enter your password', 'أدخل كلمة المرور'),
+  ('auth', 'full_name_placeholder', 'Enter your full name', 'أدخل اسمك الكامل'),
+  ('auth', 'create_password_placeholder', 'Create a password', 'أنشئ كلمة مرور'),
+  ('auth', 'signing_in', 'Signing in...', 'جاري تسجيل الدخول...'),
+  ('auth', 'creating_account', 'Creating account...', 'جاري إنشاء الحساب...'),
+  ('auth', 'create_account', 'Create Account', 'إنشاء حساب'),
+  ('auth', 'quick_access', 'Quick Access', 'دخول سريع'),
+  ('auth', 'accessing', 'Accessing...', 'جاري الوصول...'),
+  ('auth', 'quick_access_desc', 'One-click testing access', 'وصول تجريبي بضغطة واحدة'),
+  ('auth', 'test_roles', 'Test Different Roles', 'اختبار أدوار مختلفة'),
+  ('auth', 'email_confirmation_disabled', 'Email confirmation completely disabled - instant login', 'تأكيد البريد الإلكتروني معطل تماماً - دخول فوري'),
+  ('auth', 'no_email_confirmation', 'No email confirmation required - instant access granted', 'لا حاجة لتأكيد البريد الإلكتروني - وصول فوري'),
+  ('auth', 'feature_submit_title', 'Submit & Track Ideas', 'إرسال وتتبع الأفكار'),
+  ('auth', 'feature_submit_desc', 'Share innovative thoughts and monitor progress', 'شارك الأفكار المبتكرة وتابع التقدم'),
+  ('auth', 'feature_evaluation_title', 'Collaborative Evaluation', 'التقييم التعاوني'),
+  ('auth', 'feature_evaluation_desc', 'Expert review and strategic alignment assessment', 'مراجعة الخبراء وتقييم التوافق الاستراتيجي'),
+  ('auth', 'feature_analytics_title', 'Analytics & Insights', 'التحليلات والرؤى'),
+  ('auth', 'feature_analytics_desc', 'Data-driven decisions and performance tracking', 'قرارات مدعومة بالبيانات وتتبع الأداء')
+ON CONFLICT (interface_name, position_key) DO UPDATE SET
+  english_text = EXCLUDED.english_text,
+  arabic_text = EXCLUDED.arabic_text,
+  updated_at = NOW();
