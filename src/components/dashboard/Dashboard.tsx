@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { seedSampleData, forceSeedSampleData } from "@/utils/sampleDataSeeder";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Database } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
 
@@ -26,6 +27,7 @@ export const Dashboard = ({ user }: DashboardProps) => {
   const [seeding, setSeeding] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchProfile();
@@ -137,7 +139,7 @@ export const Dashboard = ({ user }: DashboardProps) => {
               ) : (
                 <Database className="h-4 w-4" />
               )}
-              <span>{seeding ? "Seeding..." : "Seed Sample Data"}</span>
+              <span>{seeding ? t('dashboard', 'seeding') : t('dashboard', 'seed_sample_data')}</span>
             </Button>
           </div>
           

@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { useToast } from "@/hooks/use-toast";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -31,17 +32,27 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <LanguageProvider>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </LanguageProvider>
     );
   }
 
   if (!user) {
-    return <AuthPage />;
+    return (
+      <LanguageProvider>
+        <AuthPage />
+      </LanguageProvider>
+    );
   }
 
-  return <Dashboard user={user} />;
+  return (
+    <LanguageProvider>
+      <Dashboard user={user} />
+    </LanguageProvider>
+  );
 };
 
 export default Index;

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Lightbulb, Clock, CheckCircle, XCircle, TrendingUp } from "lucide-react";
 import { IdeaSubmissionForm } from "./IdeaSubmissionForm";
 import { IdeaCard } from "./IdeaCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
 type Idea = Tables<"ideas">;
@@ -26,6 +27,7 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
     rejected: 0,
   });
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchUserIdeas();
@@ -63,7 +65,7 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Ideas</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard', 'total_ideas')}</CardTitle>
             <Lightbulb className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -73,7 +75,7 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Under Review</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard', 'under_review')}</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -83,7 +85,7 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard', 'approved')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -93,7 +95,7 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard', 'success_rate')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -106,8 +108,8 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Ideas</CardTitle>
-          <CardDescription>Your latest idea submissions</CardDescription>
+          <CardTitle>{t('dashboard', 'recent_ideas')}</CardTitle>
+          <CardDescription>{t('dashboard', 'latest_submissions')}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -125,8 +127,8 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
           ) : (
             <div className="text-center py-8">
               <Lightbulb className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No ideas yet</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by submitting your first idea.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">{t('common', 'no_ideas_yet')}</h3>
+              <p className="mt-1 text-sm text-gray-500">{t('common', 'get_started_submitting')}</p>
             </div>
           )}
         </CardContent>
@@ -137,8 +139,8 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
   const renderMyIdeas = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">My Ideas</h2>
-        <Badge variant="secondary">{ideas.length} total</Badge>
+        <h2 className="text-2xl font-bold">{t('dashboard', 'my_ideas_title')}</h2>
+        <Badge variant="secondary">{ideas.length} {t('dashboard', 'total_count')}</Badge>
       </div>
       
       {loading ? (
@@ -157,9 +159,9 @@ export const SubmitterDashboard = ({ profile, activeView }: SubmitterDashboardPr
         <Card>
           <CardContent className="text-center py-12">
             <Lightbulb className="mx-auto h-16 w-16 text-gray-400" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No ideas submitted yet</h3>
+            <h3 className="mt-4 text-lg font-medium text-gray-900">{t('dashboard', 'no_ideas_submitted')}</h3>
             <p className="mt-2 text-sm text-gray-500">
-              Start by submitting your first innovative idea to the platform.
+              {t('dashboard', 'start_submitting')}
             </p>
           </CardContent>
         </Card>
