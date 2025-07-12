@@ -77,10 +77,10 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
       <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
         <div>
           <h1 className={`text-3xl font-bold ${isRTL ? 'text-right' : 'text-left'}`}>
-            {t('dashboard', 'my_ideas_title')}
+            {t('dashboard', 'my_ideas')}
           </h1>
           <p className={`text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-            Manage and track your submitted ideas
+            {t('dashboard', 'manage_track_ideas')}
           </p>
         </div>
         <Button 
@@ -88,7 +88,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
           className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
         >
           <Plus className="h-4 w-4" />
-          Submit New Idea
+          {t('idea_form', 'submit_new_idea')}
         </Button>
       </div>
 
@@ -100,7 +100,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               <Lightbulb className="h-5 w-5 text-blue-600" />
               <div>
                 <p className="text-2xl font-bold">{statusCounts.total}</p>
-                <p className="text-xs text-muted-foreground">Total Ideas</p>
+                <p className="text-xs text-muted-foreground">{t('dashboard', 'total_ideas')}</p>
               </div>
             </div>
           </CardContent>
@@ -112,7 +112,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               <FileText className="h-5 w-5 text-gray-600" />
               <div>
                 <p className="text-2xl font-bold">{statusCounts.draft}</p>
-                <p className="text-xs text-muted-foreground">Drafts</p>
+                <p className="text-xs text-muted-foreground">{t('status', 'draft')}</p>
               </div>
             </div>
           </CardContent>
@@ -124,7 +124,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               <TrendingUp className="h-5 w-5 text-blue-600" />
               <div>
                 <p className="text-2xl font-bold">{statusCounts.submitted}</p>
-                <p className="text-xs text-muted-foreground">Submitted</p>
+                <p className="text-xs text-muted-foreground">{t('status', 'submitted')}</p>
               </div>
             </div>
           </CardContent>
@@ -138,7 +138,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               </div>
               <div>
                 <p className="text-2xl font-bold">{statusCounts.under_review}</p>
-                <p className="text-xs text-muted-foreground">Under Review</p>
+                <p className="text-xs text-muted-foreground">{t('status', 'under_review')}</p>
               </div>
             </div>
           </CardContent>
@@ -152,7 +152,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               </div>
               <div>
                 <p className="text-2xl font-bold">{statusCounts.approved}</p>
-                <p className="text-xs text-muted-foreground">Approved</p>
+                <p className="text-xs text-muted-foreground">{t('status', 'approved')}</p>
               </div>
             </div>
           </CardContent>
@@ -164,7 +164,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               <Star className="h-5 w-5 text-blue-600" />
               <div>
                 <p className="text-2xl font-bold">{statusCounts.implemented}</p>
-                <p className="text-xs text-muted-foreground">Implemented</p>
+                <p className="text-xs text-muted-foreground">{t('status', 'implemented')}</p>
               </div>
             </div>
           </CardContent>
@@ -178,7 +178,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               </div>
               <div>
                 <p className="text-2xl font-bold">{statusCounts.rejected}</p>
-                <p className="text-xs text-muted-foreground">Rejected</p>
+                <p className="text-xs text-muted-foreground">{t('status', 'rejected')}</p>
               </div>
             </div>
           </CardContent>
@@ -188,11 +188,11 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
       {/* Ideas List */}
       <div>
         <h2 className={`text-xl font-semibold mb-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-          Your Ideas
+          {t('dashboard', 'your_ideas')}
         </h2>
         
         {loading ? (
-          <div className="text-center py-8">Loading ideas...</div>
+          <div className="text-center py-8">{t('common', 'loading')}</div>
         ) : ideas.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center">
@@ -203,7 +203,7 @@ export const EnhancedSubmitterDashboard = ({ profile }: EnhancedSubmitterDashboa
               </p>
               <Button onClick={() => setShowForm(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Submit Your First Idea
+                {t('idea_form', 'submit_new_idea')}
               </Button>
             </CardContent>
           </Card>

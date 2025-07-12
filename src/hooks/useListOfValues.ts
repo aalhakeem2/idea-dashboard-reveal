@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface ListOfValue {
   id: number;
@@ -11,8 +12,9 @@ export interface ListOfValue {
 }
 
 export const useListOfValues = (listKey: string) => {
-  const [values, setValues] = useState<ListOfValue[]>([]);
+  const [data, setData] = useState<ListOfValue[]>([]);
   const [loading, setLoading] = useState(true);
+  const { language } = useLanguage();
 
   useEffect(() => {
     const fetchValues = async () => {
@@ -22,10 +24,10 @@ export const useListOfValues = (listKey: string) => {
           .select("*")
           .eq("list_key", listKey)
           .eq("is_active", true)
-          .order("value_en");
+          .order("value_ar"); // Order by Arabic by default
 
         if (error) throw error;
-        setValues(data || []);
+        setData(data || []);
       } catch (error) {
         console.error("Error fetching list of values:", error);
       } finally {
@@ -35,6 +37,12 @@ export const useListOfValues = (listKey: string) => {
 
     fetchValues();
   }, [listKey]);
+
+  // Convert data to dropdown format
+  const values = data.map(item => ({
+    value: item.value_key,
+    label: language === 'ar' ? item.value_ar : item.value_en,
+  }));
 
   return { values, loading };
 };

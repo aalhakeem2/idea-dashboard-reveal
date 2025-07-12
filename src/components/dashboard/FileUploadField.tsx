@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, X, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FileUploadFieldProps {
   label: string;
@@ -31,6 +32,7 @@ export const FileUploadField = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [dragOver, setDragOver] = useState(false);
+  const { t, isRTL } = useLanguage();
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -106,7 +108,7 @@ export const FileUploadField = ({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <Label className="text-sm font-medium">{label}</Label>
+      <Label className={`text-sm font-medium ${isRTL ? 'text-right block' : 'text-left'}`}>{label}</Label>
       
       <div
         className={`
@@ -121,11 +123,14 @@ export const FileUploadField = ({
       >
         <div className="flex flex-col items-center justify-center text-center">
           <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">
-            {placeholder || "Drop files here or click to upload"}
+          <p className={`text-sm text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
+            {placeholder || t('idea_form', 'upload_files')}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {multiple ? "Multiple files allowed" : "Single file only"} • Max 10MB
+          <p className={`text-xs text-muted-foreground mt-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+            {multiple 
+              ? t('idea_form', 'multiple_files_allowed')
+              : t('idea_form', 'single_file_only')
+            }
           </p>
         </div>
       </div>

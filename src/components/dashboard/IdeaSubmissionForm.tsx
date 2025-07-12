@@ -224,13 +224,13 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
 
               <div className="space-y-2">
                 <Label className={isRTL ? 'text-right block' : 'text-left'}>
-                  Strategic Alignment
+                  {t('idea_form', 'strategic_alignment')}
                 </Label>
                 <MultiSelectDropdown
                   options={strategicAlignmentOptions}
                   value={strategicAlignment}
                   onChange={setStrategicAlignment}
-                  placeholder="Select strategic alignment areas..."
+                  placeholder={t('idea_form', 'select_strategic_alignment')}
                   disabled={lovLoading}
                 />
               </div>
@@ -271,36 +271,36 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
             {/* File Upload Section */}
             <div className="space-y-4">
               <h3 className={`text-lg font-semibold ${isRTL ? 'text-right' : 'text-left'}`}>
-                File Attachments (Optional)
+                {t('idea_form', 'file_attachments_optional')}
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FileUploadField
-                  label="Feasibility Study"
+                  label={t('idea_form', 'feasibility_study')}
                   fileType="feasibility"
                   accept=".pdf,.doc,.docx"
                   value={feasibilityFiles}
                   onChange={setFeasibilityFiles}
-                  placeholder="Upload feasibility documents"
+                  placeholder={t('idea_form', 'upload_feasibility_documents')}
                 />
                 
                 <FileUploadField
-                  label="Pricing Offers"
+                  label={t('idea_form', 'pricing_offers')}
                   fileType="pricing_offer"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   value={pricingFiles}
                   onChange={setPricingFiles}
-                  placeholder="Upload pricing documents"
+                  placeholder={t('idea_form', 'upload_pricing_documents')}
                 />
                 
                 <FileUploadField
-                  label="Prototype Images"
+                  label={t('idea_form', 'prototype_images')}
                   fileType="prototype"
                   accept="image/*"
                   multiple
                   value={prototypeFiles}
                   onChange={setPrototypeFiles}
-                  placeholder="Upload prototype images"
+                  placeholder={t('idea_form', 'upload_prototype_images')}
                 />
               </div>
             </div>
