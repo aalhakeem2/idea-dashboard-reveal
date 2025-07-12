@@ -8,6 +8,8 @@ import { Header } from "./Header";
 import { SubmitterDashboard } from "./SubmitterDashboard";
 import { EvaluatorDashboard } from "./EvaluatorDashboard";
 import { ManagementDashboard } from "./ManagementDashboard";
+import { EnhancedSubmitterDashboard } from "./EnhancedSubmitterDashboard";
+import { EnhancedEvaluatorDashboard } from "./EnhancedEvaluatorDashboard";
 import { ProfileSetup } from "./ProfileSetup";
 import { useToast } from "@/hooks/use-toast";
 import { seedSampleData, forceSeedSampleData } from "@/utils/sampleDataSeeder";
@@ -105,9 +107,13 @@ export const Dashboard = ({ user }: DashboardProps) => {
   const renderDashboard = () => {
     switch (profile.role) {
       case "submitter":
-        return <SubmitterDashboard profile={profile} activeView={activeView} />;
+        if (activeView === "dashboard") {
+          return <SubmitterDashboard profile={profile} activeView={activeView} />;
+        } else {
+          return <EnhancedSubmitterDashboard profile={profile} />;
+        }
       case "evaluator":
-        return <EvaluatorDashboard profile={profile} activeView={activeView} />;
+        return <EnhancedEvaluatorDashboard profile={profile} />;
       case "management":
         return <ManagementDashboard profile={profile} activeView={activeView} />;
       default:

@@ -11,6 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Lightbulb } from "lucide-react";
+import { FileUploadField } from "./FileUploadField";
+import { MultiSelectDropdown } from "./MultiSelectDropdown";
+import { useListOfValues } from "@/hooks/useListOfValues";
 
 type Profile = Tables<"profiles">;
 
@@ -29,15 +32,34 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
     expected_roi: "",
     strategic_alignment_score: "",
   });
+  
+  // File upload states
+  const [feasibilityFiles, setFeasibilityFiles] = useState<File[]>([]);
+  const [pricingFiles, setPricingFiles] = useState<File[]>([]);
+  const [prototypeFiles, setPrototypeFiles] = useState<File[]>([]);
+  
+  // Strategic alignment multi-select
+  const [strategicAlignment, setStrategicAlignment] = useState<string[]>([]);
+  
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+  const { values: strategicAlignmentOptions, loading: lovLoading } = useListOfValues('strategic_alignment');
+
+  const uploadFile = async (file: File, ideaId: string, fileType: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${ideaId}/${fileType}/${Date.now()}.${fileExt}`;
+    
+    // For now, we'll just return a placeholder URL since storage isn't set up
+    return `placeholder-url/${fileName}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("ideas").insert({
+      // Insert the idea first
+      const { data: ideaData, error: ideaError } = await supabase.from("ideas").insert({
         title: formData.title,
         description: formData.description,
         category: formData.category as any,
@@ -46,9 +68,55 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
         expected_roi: formData.expected_roi ? parseFloat(formData.expected_roi) : null,
         strategic_alignment_score: formData.strategic_alignment_score ? parseInt(formData.strategic_alignment_score) : null,
         status: "draft",
-      });
+        language: language,
+      }).select().single();
 
-      if (error) throw error;
+      if (ideaError) throw ideaError;
+      const ideaId = ideaData.id;
+
+      // Upload files and create attachment records
+      const attachmentPromises = [];
+
+      for (const file of feasibilityFiles) {
+        const fileUrl = await uploadFile(file, ideaId, 'feasibility');
+        attachmentPromises.push(
+          supabase.from("idea_attachments").insert({
+            idea_id: ideaId,
+            file_type: 'feasibility',
+            file_name: file.name,
+            file_url: fileUrl,
+            uploaded_by: profile.id,
+          })
+        );
+      }
+
+      for (const file of pricingFiles) {
+        const fileUrl = await uploadFile(file, ideaId, 'pricing_offer');
+        attachmentPromises.push(
+          supabase.from("idea_attachments").insert({
+            idea_id: ideaId,
+            file_type: 'pricing_offer',
+            file_name: file.name,
+            file_url: fileUrl,
+            uploaded_by: profile.id,
+          })
+        );
+      }
+
+      for (const file of prototypeFiles) {
+        const fileUrl = await uploadFile(file, ideaId, 'prototype');
+        attachmentPromises.push(
+          supabase.from("idea_attachments").insert({
+            idea_id: ideaId,
+            file_type: 'prototype',
+            file_name: file.name,
+            file_url: fileUrl,
+            uploaded_by: profile.id,
+          })
+        );
+      }
+
+      await Promise.all(attachmentPromises);
 
       toast({
         title: t('common', 'success'),
@@ -63,6 +131,12 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
         expected_roi: "",
         strategic_alignment_score: "",
       });
+      
+      // Reset file uploads
+      setFeasibilityFiles([]);
+      setPricingFiles([]);
+      setPrototypeFiles([]);
+      setStrategicAlignment([]);
 
       onIdeaSubmitted();
     } catch (error) {
@@ -149,24 +223,16 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="strategic_alignment_score" className={isRTL ? 'text-right block' : 'text-left'}>
-                  {t('idea_form', 'strategic_alignment')}
+                <Label className={isRTL ? 'text-right block' : 'text-left'}>
+                  Strategic Alignment
                 </Label>
-                <Select 
-                  value={formData.strategic_alignment_score} 
-                  onValueChange={(value) => handleChange("strategic_alignment_score", value)}
-                >
-                  <SelectTrigger className={isRTL ? 'text-right' : 'text-left'}>
-                    <SelectValue placeholder={t('idea_form', 'rate_alignment')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiSelectDropdown
+                  options={strategicAlignmentOptions}
+                  value={strategicAlignment}
+                  onChange={setStrategicAlignment}
+                  placeholder="Select strategic alignment areas..."
+                  disabled={lovLoading}
+                />
               </div>
             </div>
 
@@ -198,6 +264,43 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
                   onChange={(e) => handleChange("expected_roi", e.target.value)}
                   className={isRTL ? 'text-right' : 'text-left'}
                   dir="ltr" // Keep numbers LTR
+                />
+              </div>
+            </div>
+
+            {/* File Upload Section */}
+            <div className="space-y-4">
+              <h3 className={`text-lg font-semibold ${isRTL ? 'text-right' : 'text-left'}`}>
+                File Attachments (Optional)
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FileUploadField
+                  label="Feasibility Study"
+                  fileType="feasibility"
+                  accept=".pdf,.doc,.docx"
+                  value={feasibilityFiles}
+                  onChange={setFeasibilityFiles}
+                  placeholder="Upload feasibility documents"
+                />
+                
+                <FileUploadField
+                  label="Pricing Offers"
+                  fileType="pricing_offer"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  value={pricingFiles}
+                  onChange={setPricingFiles}
+                  placeholder="Upload pricing documents"
+                />
+                
+                <FileUploadField
+                  label="Prototype Images"
+                  fileType="prototype"
+                  accept="image/*"
+                  multiple
+                  value={prototypeFiles}
+                  onChange={setPrototypeFiles}
+                  placeholder="Upload prototype images"
                 />
               </div>
             </div>

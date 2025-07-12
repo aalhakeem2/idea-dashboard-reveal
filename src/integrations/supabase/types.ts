@@ -71,6 +71,51 @@ export type Database = {
           },
         ]
       }
+      idea_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          idea_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          idea_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          idea_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_attachments_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_comments: {
         Row: {
           comment: string
@@ -113,15 +158,22 @@ export type Database = {
       ideas: {
         Row: {
           assigned_evaluator_id: string | null
+          average_evaluation_score: number | null
           category: Database["public"]["Enums"]["idea_category"]
           created_at: string | null
+          current_stage: string | null
           description: string
           evaluated_at: string | null
           expected_roi: number | null
+          feasibility_study_url: string | null
           id: string
+          idea_reference_code: string | null
           implementation_cost: number | null
           implemented_at: string | null
+          language: string | null
+          pricing_offer_url: string | null
           priority_score: number | null
+          prototype_images_urls: string[] | null
           status: Database["public"]["Enums"]["idea_status"]
           strategic_alignment_score: number | null
           submitted_at: string | null
@@ -131,15 +183,22 @@ export type Database = {
         }
         Insert: {
           assigned_evaluator_id?: string | null
+          average_evaluation_score?: number | null
           category: Database["public"]["Enums"]["idea_category"]
           created_at?: string | null
+          current_stage?: string | null
           description: string
           evaluated_at?: string | null
           expected_roi?: number | null
+          feasibility_study_url?: string | null
           id?: string
+          idea_reference_code?: string | null
           implementation_cost?: number | null
           implemented_at?: string | null
+          language?: string | null
+          pricing_offer_url?: string | null
           priority_score?: number | null
+          prototype_images_urls?: string[] | null
           status?: Database["public"]["Enums"]["idea_status"]
           strategic_alignment_score?: number | null
           submitted_at?: string | null
@@ -149,15 +208,22 @@ export type Database = {
         }
         Update: {
           assigned_evaluator_id?: string | null
+          average_evaluation_score?: number | null
           category?: Database["public"]["Enums"]["idea_category"]
           created_at?: string | null
+          current_stage?: string | null
           description?: string
           evaluated_at?: string | null
           expected_roi?: number | null
+          feasibility_study_url?: string | null
           id?: string
+          idea_reference_code?: string | null
           implementation_cost?: number | null
           implemented_at?: string | null
+          language?: string | null
+          pricing_offer_url?: string | null
           priority_score?: number | null
+          prototype_images_urls?: string[] | null
           status?: Database["public"]["Enums"]["idea_status"]
           strategic_alignment_score?: number | null
           submitted_at?: string | null
@@ -181,6 +247,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      list_of_values: {
+        Row: {
+          created_at: string | null
+          id: number
+          is_active: boolean | null
+          list_key: string
+          value_ar: string
+          value_en: string
+          value_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          is_active?: boolean | null
+          list_key: string
+          value_ar: string
+          value_en: string
+          value_key: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          is_active?: boolean | null
+          list_key?: string
+          value_ar?: string
+          value_en?: string
+          value_key?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -250,6 +346,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_average_evaluation_score: {
+        Args: { idea_uuid: string }
+        Returns: number
+      }
+      generate_idea_reference_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
