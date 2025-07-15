@@ -59,6 +59,9 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
 
     try {
       let newIdeaId: string | null = null;
+      
+      // Calculate strategic alignment score from selected options
+      const alignmentScore = strategicAlignment.length > 0 ? strategicAlignment.length * 20 : null;
 
       if (editingIdea) {
         // Update existing idea
@@ -70,7 +73,8 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
             category: formData.category as any,
             implementation_cost: formData.implementation_cost ? parseFloat(formData.implementation_cost) : null,
             expected_roi: formData.expected_roi ? parseFloat(formData.expected_roi) : null,
-            strategic_alignment_score: formData.strategic_alignment_score ? parseInt(formData.strategic_alignment_score) : null,
+            strategic_alignment_score: alignmentScore,
+            strategic_alignment_selections: strategicAlignment,
             status: isDraft ? "draft" : "submitted",
             is_draft: isDraft,
             submitted_at: isDraft ? null : new Date().toISOString(),
@@ -95,7 +99,8 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
           submitter_id: profile.id,
           implementation_cost: formData.implementation_cost ? parseFloat(formData.implementation_cost) : null,
           expected_roi: formData.expected_roi ? parseFloat(formData.expected_roi) : null,
-          strategic_alignment_score: formData.strategic_alignment_score ? parseInt(formData.strategic_alignment_score) : null,
+          strategic_alignment_score: alignmentScore,
+          strategic_alignment_selections: strategicAlignment,
           status: isDraft ? "draft" : "submitted",
           is_draft: isDraft,
           submitted_at: isDraft ? null : new Date().toISOString(),
@@ -232,10 +237,12 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
         strategic_alignment_score: editingIdea.strategic_alignment_score?.toString() || "",
       });
       
-      // For strategic alignment, we need to convert from the database format
-      // For now, we'll set it as empty array, but this should be loaded from a separate field
-      // when strategic alignment is properly stored
-      setStrategicAlignment([]);
+      // Load strategic alignment selections
+      if (editingIdea.strategic_alignment_selections) {
+        setStrategicAlignment(editingIdea.strategic_alignment_selections);
+      } else {
+        setStrategicAlignment([]);
+      }
     }
   }, [editingIdea]);
 

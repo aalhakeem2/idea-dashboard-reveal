@@ -257,6 +257,7 @@ export type Database = {
           prototype_images_urls: string[] | null
           status: Database["public"]["Enums"]["idea_status"]
           strategic_alignment_score: number | null
+          strategic_alignment_selections: string[] | null
           submitted_at: string | null
           submitter_id: string
           title: string
@@ -284,6 +285,7 @@ export type Database = {
           prototype_images_urls?: string[] | null
           status?: Database["public"]["Enums"]["idea_status"]
           strategic_alignment_score?: number | null
+          strategic_alignment_selections?: string[] | null
           submitted_at?: string | null
           submitter_id: string
           title: string
@@ -311,6 +313,7 @@ export type Database = {
           prototype_images_urls?: string[] | null
           status?: Database["public"]["Enums"]["idea_status"]
           strategic_alignment_score?: number | null
+          strategic_alignment_selections?: string[] | null
           submitted_at?: string | null
           submitter_id?: string
           title?: string
