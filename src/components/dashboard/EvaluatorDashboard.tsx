@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Star, TrendingUp, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ClipboardCheck, Star, TrendingUp, Users, Activity } from "lucide-react";
+import { IdeaCard } from "./IdeaCard";
+import { IdeaTimeline } from "./IdeaTimeline";
+import { IdeaActionLog } from "./IdeaActionLog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
 type Idea = Tables<"ideas">;
@@ -15,6 +20,9 @@ interface EvaluatorDashboardProps {
 
 export const EvaluatorDashboard = ({ profile, activeView }: EvaluatorDashboardProps) => {
   const [pendingIdeas, setPendingIdeas] = useState<Idea[]>([]);
+  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  const [statusLogs, setStatusLogs] = useState([]);
+  const [actionLogs, setActionLogs] = useState([]);
   const [stats, setStats] = useState({
     pending: 0,
     evaluated: 0,
@@ -22,11 +30,18 @@ export const EvaluatorDashboard = ({ profile, activeView }: EvaluatorDashboardPr
     topRated: 0,
   });
   const [loading, setLoading] = useState(true);
+  const { language } = useLanguage();
 
   useEffect(() => {
     fetchPendingIdeas();
     fetchEvaluatorStats();
   }, [profile.id]);
+
+  useEffect(() => {
+    if (selectedIdea) {
+      fetchIdeaLogs(selectedIdea.id);
+    }
+  }, [selectedIdea]);
 
   const fetchPendingIdeas = async () => {
     try {
@@ -68,6 +83,39 @@ export const EvaluatorDashboard = ({ profile, activeView }: EvaluatorDashboardPr
       console.error("Error fetching evaluator stats:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchIdeaLogs = async (ideaId: string) => {
+    try {
+      // Fetch status logs
+      const { data: statusData, error: statusError } = await supabase
+        .from('idea_status_log')
+        .select(`
+          *,
+          profiles:changed_by(full_name)
+        `)
+        .eq('idea_id', ideaId)
+        .order('timestamp', { ascending: false });
+
+      if (statusError) throw statusError;
+
+      // Fetch action logs
+      const { data: actionData, error: actionError } = await supabase
+        .from('idea_action_log')
+        .select(`
+          *,
+          profiles:performed_by(full_name)
+        `)
+        .eq('idea_id', ideaId)
+        .order('timestamp', { ascending: false });
+
+      if (actionError) throw actionError;
+
+      setStatusLogs(statusData || []);
+      setActionLogs(actionData || []);
+    } catch (error) {
+      console.error('Error fetching idea logs:', error);
     }
   };
 
@@ -130,19 +178,13 @@ export const EvaluatorDashboard = ({ profile, activeView }: EvaluatorDashboardPr
           ) : pendingIdeas.length > 0 ? (
             <div className="space-y-4">
               {pendingIdeas.slice(0, 5).map((idea) => (
-                <div key={idea.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                  <div className="flex-1">
-                    <h3 className="font-medium">{idea.title}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-1">{idea.description}</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Badge variant="outline">{idea.category.replace("_", " ")}</Badge>
-                      <Badge variant="secondary">{idea.status.replace("_", " ")}</Badge>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(idea.created_at!).toLocaleDateString()}
-                  </div>
-                </div>
+                <IdeaCard 
+                  key={idea.id} 
+                  idea={idea} 
+                  detailed 
+                  showTimeline={true}
+                  onViewActivity={(idea) => setSelectedIdea(idea)}
+                />
               ))}
             </div>
           ) : (
@@ -154,6 +196,32 @@ export const EvaluatorDashboard = ({ profile, activeView }: EvaluatorDashboardPr
           )}
         </CardContent>
       </Card>
+
+      {selectedIdea && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:'} {selectedIdea.title}
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedIdea(null)}
+              >
+                {language === 'ar' ? 'إغلاق' : 'Close'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <IdeaTimeline statusLogs={statusLogs} currentStatus={selectedIdea.status} />
+              <IdeaActionLog actionLogs={actionLogs} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 

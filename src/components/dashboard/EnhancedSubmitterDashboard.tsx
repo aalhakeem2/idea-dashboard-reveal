@@ -263,7 +263,15 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
               ) : (
                 <div className="space-y-4">
                   {submittedIdeas.slice(0, 5).map((idea) => (
-                    <IdeaCard key={idea.id} idea={idea} />
+                    <IdeaCard 
+                      key={idea.id} 
+                      idea={idea} 
+                      showTimeline={true}
+                      onViewActivity={(idea) => {
+                        setSelectedIdea(idea);
+                        setActiveView('timeline');
+                      }}
+                    />
                   ))}
                   {submittedIdeas.length > 5 && (
                     <div className="text-center pt-4">
@@ -310,17 +318,16 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
               ) : (
                 <div className="space-y-4">
                   {submittedIdeas.map((idea) => (
-                    <div key={idea.id} className="relative">
-                      <IdeaCard idea={idea} detailed />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="absolute top-4 right-4"
-                        onClick={() => setSelectedIdea(idea)}
-                      >
-                        {language === 'ar' ? 'عرض النشاط' : 'View Activity'}
-                      </Button>
-                    </div>
+                    <IdeaCard 
+                      key={idea.id} 
+                      idea={idea} 
+                      detailed 
+                      showTimeline={true}
+                      onViewActivity={(idea) => {
+                        setSelectedIdea(idea);
+                        setActiveView('timeline');
+                      }}
+                    />
                   ))}
                 </div>
               )}

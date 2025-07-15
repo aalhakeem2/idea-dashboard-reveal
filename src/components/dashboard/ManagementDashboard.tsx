@@ -3,8 +3,13 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Users, Lightbulb, CheckCircle, Clock, Target } from "lucide-react";
+import { TrendingUp, Users, Lightbulb, CheckCircle, Clock, Target, Activity } from "lucide-react";
+import { IdeaCard } from "./IdeaCard";
+import { IdeaTimeline } from "./IdeaTimeline";
+import { IdeaActionLog } from "./IdeaActionLog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
 type Idea = Tables<"ideas">;
@@ -25,7 +30,12 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
   });
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
+  const [recentIdeas, setRecentIdeas] = useState<Idea[]>([]);
+  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  const [statusLogs, setStatusLogs] = useState([]);
+  const [actionLogs, setActionLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { language } = useLanguage();
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
@@ -33,7 +43,14 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
     fetchManagementStats();
     fetchCategoryData();
     fetchStatusData();
+    fetchRecentIdeas();
   }, []);
+
+  useEffect(() => {
+    if (selectedIdea) {
+      fetchIdeaLogs(selectedIdea.id);
+    }
+  }, [selectedIdea]);
 
   const fetchManagementStats = async () => {
     try {
@@ -108,6 +125,55 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
       setStatusData(chartData);
     } catch (error) {
       console.error("Error fetching status data:", error);
+    }
+  };
+
+  const fetchRecentIdeas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("ideas")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setRecentIdeas(data || []);
+    } catch (error) {
+      console.error("Error fetching recent ideas:", error);
+    }
+  };
+
+  const fetchIdeaLogs = async (ideaId: string) => {
+    try {
+      // Fetch status logs
+      const { data: statusData, error: statusError } = await supabase
+        .from('idea_status_log')
+        .select(`
+          *,
+          profiles:changed_by(full_name)
+        `)
+        .eq('idea_id', ideaId)
+        .order('timestamp', { ascending: false });
+
+      if (statusError) throw statusError;
+
+      // Fetch action logs
+      const { data: actionData, error: actionError } = await supabase
+        .from('idea_action_log')
+        .select(`
+          *,
+          profiles:performed_by(full_name)
+        `)
+        .eq('idea_id', ideaId)
+        .order('timestamp', { ascending: false });
+
+      if (actionError) throw actionError;
+
+      setStatusLogs(statusData || []);
+      setActionLogs(actionData || []);
+    } catch (error) {
+      console.error('Error fetching idea logs:', error);
     }
   };
 
@@ -251,6 +317,57 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5" />
+            {language === 'ar' ? 'الأفكار الحديثة' : 'Recent Ideas'}
+          </CardTitle>
+          <CardDescription>
+            {language === 'ar' ? 'أحدث الأفكار المُرسلة في النظام' : 'Latest ideas submitted to the system'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentIdeas.map((idea) => (
+              <IdeaCard 
+                key={idea.id} 
+                idea={idea} 
+                detailed 
+                showTimeline={true}
+                onViewActivity={(idea) => setSelectedIdea(idea)}
+              />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedIdea && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:'} {selectedIdea.title}
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedIdea(null)}
+              >
+                {language === 'ar' ? 'إغلاق' : 'Close'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <IdeaTimeline statusLogs={statusLogs} currentStatus={selectedIdea.status} />
+              <IdeaActionLog actionLogs={actionLogs} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
