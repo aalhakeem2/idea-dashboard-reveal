@@ -119,15 +119,43 @@ export const FileUploadField = ({
     onChange(newFiles);
   };
 
-  const handleDownload = (fileUrl: string, fileName: string) => {
-    // Create a download link
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (fileUrl: string, fileName: string) => {
+    try {
+      // Fetch the file properly to ensure integrity
+      const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch file');
+      }
+      
+      // Get the file as a blob to preserve binary data
+      const blob = await response.blob();
+      
+      // Create object URL for the blob
+      const objectUrl = URL.createObjectURL(blob);
+      
+      // Create and trigger download
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+      
+      toast({
+        title: t('idea_form', 'file_downloaded'),
+        description: `${fileName} has been downloaded successfully`,
+      });
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: t('idea_form', 'download_failed'),
+        description: `Failed to download ${fileName}`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
