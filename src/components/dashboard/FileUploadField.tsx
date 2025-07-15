@@ -180,35 +180,37 @@ export const FileUploadField = ({
           {existingFiles.map((file) => (
             <div
               key={file.id}
-              className="flex items-center justify-between p-2 bg-muted/50 rounded-md border"
+              className="flex items-center justify-between p-3 bg-muted/50 rounded-md border gap-3"
             >
-              <div className="flex items-center space-x-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm truncate">{file.file_name}</span>
-                <span className="text-xs text-muted-foreground px-2 py-1 bg-primary/10 rounded">
+                <span className="text-xs text-muted-foreground px-2 py-1 bg-primary/10 rounded flex-shrink-0">
                   {file.file_type}
                 </span>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => handleDownload(file.file_url, file.file_name)}
-                  title="Download file"
+                  title={t('idea_form', 'download_file')}
+                  className="h-8 w-8 p-0"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-3 w-3" />
                 </Button>
                 {!readOnly && onRemoveExisting && (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => onRemoveExisting(file.id)}
                     disabled={disabled}
-                    title="Remove file"
+                    title={t('idea_form', 'remove_file')}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </Button>
                 )}
               </div>
@@ -220,27 +222,31 @@ export const FileUploadField = ({
       {/* New Files */}
       {value.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">New Files:</p>
+          <p className={`text-sm font-medium text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
+            {t('idea_form', 'new_files')}:
+          </p>
           {value.map((file, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-2 bg-muted rounded-md"
+              className="flex items-center justify-between p-3 bg-muted rounded-md border gap-3"
             >
-              <div className="flex items-center space-x-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm truncate">{file.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                <span className="text-xs text-muted-foreground px-2 py-1 bg-primary/10 rounded flex-shrink-0">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
                 </span>
               </div>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => removeFile(index)}
                 disabled={disabled}
+                title={t('idea_form', 'remove_file')}
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive flex-shrink-0"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
               </Button>
             </div>
           ))}
