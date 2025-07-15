@@ -57,12 +57,46 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
   const { t, isRTL, language } = useLanguage();
   const { values: strategicAlignmentOptions, loading: lovLoading } = useListOfValues('strategic_alignment');
 
-  const uploadFile = async (file: File, ideaId: string, fileType: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${ideaId}/${fileType}/${Date.now()}.${fileExt}`;
-    
-    // For now, we'll just return a placeholder URL since storage isn't set up
-    return `placeholder-url/${fileName}`;
+  const uploadFile = async (file: File, ideaId: string, fileType: string): Promise<string> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Create a unique file path: userId/ideaId/fileType/timestamp-filename
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${timestamp}-${sanitizedFileName}`;
+      const filePath = `${user.id}/${ideaId}/${fileType}/${fileName}`;
+
+      // Upload file to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('idea-attachments')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('File upload error:', error);
+        throw new Error(`Failed to upload file: ${error.message}`);
+      }
+
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('idea-attachments')
+        .getPublicUrl(data.path);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: t('common', 'error'),
+        description: `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   const submitIdea = async (isDraft: boolean = false) => {
