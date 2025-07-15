@@ -60,8 +60,8 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
     try {
       let newIdeaId: string | null = null;
       
-      // Calculate strategic alignment score from selected options
-      const alignmentScore = strategicAlignment.length > 0 ? strategicAlignment.length * 20 : null;
+      // Calculate strategic alignment score from selected options (1-5 scale)
+      const alignmentScore = strategicAlignment.length > 0 ? Math.min(strategicAlignment.length, 5) : 0;
 
       if (editingIdea) {
         // Update existing idea
