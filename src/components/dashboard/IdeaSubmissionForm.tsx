@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
@@ -219,6 +219,25 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Load existing idea data when editing
+  useEffect(() => {
+    if (editingIdea) {
+      setFormData({
+        title: editingIdea.title,
+        description: editingIdea.description,
+        category: editingIdea.category,
+        implementation_cost: editingIdea.implementation_cost?.toString() || "",
+        expected_roi: editingIdea.expected_roi?.toString() || "",
+        strategic_alignment_score: editingIdea.strategic_alignment_score?.toString() || "",
+      });
+      
+      // For strategic alignment, we need to convert from the database format
+      // For now, we'll set it as empty array, but this should be loaded from a separate field
+      // when strategic alignment is properly stored
+      setStrategicAlignment([]);
+    }
+  }, [editingIdea]);
 
   return (
     <div className="max-w-2xl mx-auto">
