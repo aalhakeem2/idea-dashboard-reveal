@@ -2,9 +2,16 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, FileText } from "lucide-react";
+import { Upload, X, FileText, Download, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+interface ExistingFile {
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_type: string;
+}
 
 interface FileUploadFieldProps {
   label: string;
@@ -16,6 +23,9 @@ interface FileUploadFieldProps {
   disabled?: boolean;
   className?: string;
   placeholder?: string;
+  existingFiles?: ExistingFile[];
+  onRemoveExisting?: (fileId: string) => void;
+  readOnly?: boolean;
 }
 
 export const FileUploadField = ({
@@ -27,7 +37,10 @@ export const FileUploadField = ({
   onChange,
   disabled = false,
   className = "",
-  placeholder
+  placeholder,
+  existingFiles = [],
+  onRemoveExisting,
+  readOnly = false
 }: FileUploadFieldProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -106,34 +119,47 @@ export const FileUploadField = ({
     onChange(newFiles);
   };
 
+  const handleDownload = (fileUrl: string, fileName: string) => {
+    // Create a download link
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className={`space-y-2 ${className}`}>
       <Label className={`text-sm font-medium ${isRTL ? 'text-right block' : 'text-left'}`}>{label}</Label>
       
-      <div
-        className={`
-          border-2 border-dashed rounded-lg p-4 transition-colors
-          ${dragOver ? 'border-primary bg-primary/5' : 'border-border'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'}
-        `}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={() => !disabled && fileInputRef.current?.click()}
-      >
-        <div className="flex flex-col items-center justify-center text-center">
-          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className={`text-sm text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-            {placeholder || t('idea_form', 'upload_files')}
-          </p>
-          <p className={`text-xs text-muted-foreground mt-1 ${isRTL ? 'text-right' : 'text-left'}`}>
-            {multiple 
-              ? t('idea_form', 'multiple_files_allowed')
-              : t('idea_form', 'single_file_only')
-            }
-          </p>
+      {!readOnly && (
+        <div
+          className={`
+            border-2 border-dashed rounded-lg p-4 transition-colors
+            ${dragOver ? 'border-primary bg-primary/5' : 'border-border'}
+            ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'}
+          `}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={() => !disabled && fileInputRef.current?.click()}
+        >
+          <div className="flex flex-col items-center justify-center text-center">
+            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className={`text-sm text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
+              {placeholder || t('idea_form', 'upload_files')}
+            </p>
+            <p className={`text-xs text-muted-foreground mt-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+              {multiple 
+                ? t('idea_form', 'multiple_files_allowed')
+                : t('idea_form', 'single_file_only')
+              }
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <Input
         ref={fileInputRef}
@@ -145,8 +171,56 @@ export const FileUploadField = ({
         disabled={disabled}
       />
 
+      {/* Existing Files */}
+      {existingFiles.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            {readOnly ? 'Attached Files:' : 'Current Files:'}
+          </p>
+          {existingFiles.map((file) => (
+            <div
+              key={file.id}
+              className="flex items-center justify-between p-2 bg-muted/50 rounded-md border"
+            >
+              <div className="flex items-center space-x-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm truncate">{file.file_name}</span>
+                <span className="text-xs text-muted-foreground px-2 py-1 bg-primary/10 rounded">
+                  {file.file_type}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDownload(file.file_url, file.file_name)}
+                  title="Download file"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                {!readOnly && onRemoveExisting && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRemoveExisting(file.id)}
+                    disabled={disabled}
+                    title="Remove file"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* New Files */}
       {value.length > 0 && (
         <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">New Files:</p>
           {value.map((file, index) => (
             <div
               key={index}

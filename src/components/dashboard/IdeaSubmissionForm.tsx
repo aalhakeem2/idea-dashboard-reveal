@@ -42,6 +42,17 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
   // Strategic alignment multi-select
   const [strategicAlignment, setStrategicAlignment] = useState<string[]>([]);
   
+  // Existing attachments from database
+  const [existingAttachments, setExistingAttachments] = useState<{
+    feasibility: any[];
+    pricing_offer: any[];
+    prototype: any[];
+  }>({
+    feasibility: [],
+    pricing_offer: [],
+    prototype: []
+  });
+  
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
   const { values: strategicAlignmentOptions, loading: lovLoading } = useListOfValues('strategic_alignment');
@@ -225,6 +236,57 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleRemoveExistingFile = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('idea_attachments')
+        .delete()
+        .eq('id', fileId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setExistingAttachments(prev => ({
+        feasibility: prev.feasibility.filter(f => f.id !== fileId),
+        pricing_offer: prev.pricing_offer.filter(f => f.id !== fileId),
+        prototype: prev.prototype.filter(f => f.id !== fileId)
+      }));
+      
+      toast({
+        title: t('common', 'success'),
+        description: "File removed successfully",
+      });
+    } catch (error) {
+      console.error("Error removing file:", error);
+      toast({
+        title: t('common', 'error'),
+        description: "Failed to remove file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadExistingAttachments = async (ideaId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('idea_attachments')
+        .select('*')
+        .eq('idea_id', ideaId);
+        
+      if (error) throw error;
+      
+      const groupedFiles = {
+        feasibility: data?.filter(f => f.file_type === 'feasibility') || [],
+        pricing_offer: data?.filter(f => f.file_type === 'pricing_offer') || [],
+        prototype: data?.filter(f => f.file_type === 'prototype') || []
+      };
+      
+      setExistingAttachments(groupedFiles);
+    } catch (error) {
+      console.error("Error loading attachments:", error);
+    }
+  };
+
   // Load existing idea data when editing
   useEffect(() => {
     if (editingIdea) {
@@ -243,6 +305,16 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
       } else {
         setStrategicAlignment([]);
       }
+      
+      // Load existing attachments
+      loadExistingAttachments(editingIdea.id);
+    } else {
+      // Reset everything when not editing
+      setExistingAttachments({
+        feasibility: [],
+        pricing_offer: [],
+        prototype: []
+      });
     }
   }, [editingIdea]);
 
@@ -378,26 +450,35 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
                   accept=".pdf,.doc,.docx"
                   value={feasibilityFiles}
                   onChange={setFeasibilityFiles}
-                  placeholder={t('idea_form', 'upload_feasibility_documents')}
+                  disabled={loading}
+                  placeholder={t('idea_form', 'upload_feasibility')}
+                  existingFiles={existingAttachments.feasibility}
+                  onRemoveExisting={handleRemoveExistingFile}
                 />
                 
                 <FileUploadField
-                  label={t('idea_form', 'pricing_offers')}
+                  label={t('idea_form', 'pricing_offer')}
                   fileType="pricing_offer"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  accept=".pdf,.doc,.docx"
                   value={pricingFiles}
                   onChange={setPricingFiles}
-                  placeholder={t('idea_form', 'upload_pricing_documents')}
+                  disabled={loading}
+                  placeholder={t('idea_form', 'upload_pricing')}
+                  existingFiles={existingAttachments.pricing_offer}
+                  onRemoveExisting={handleRemoveExistingFile}
                 />
                 
                 <FileUploadField
                   label={t('idea_form', 'prototype_images')}
                   fileType="prototype"
                   accept="image/*"
-                  multiple
+                  multiple={true}
                   value={prototypeFiles}
                   onChange={setPrototypeFiles}
-                  placeholder={t('idea_form', 'upload_prototype_images')}
+                  disabled={loading}
+                  placeholder={t('idea_form', 'upload_prototypes')}
+                  existingFiles={existingAttachments.prototype}
+                  onRemoveExisting={handleRemoveExistingFile}
                 />
               </div>
             </div>

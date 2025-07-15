@@ -8,6 +8,7 @@ import { ClipboardCheck, Star, TrendingUp, Users, Activity } from "lucide-react"
 import { IdeaCard } from "./IdeaCard";
 import { IdeaTimeline } from "./IdeaTimeline";
 import { IdeaActionLog } from "./IdeaActionLog";
+import { IdeaFileViewer } from "./IdeaFileViewer";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
@@ -178,13 +179,18 @@ export const EvaluatorDashboard = ({ profile, activeView }: EvaluatorDashboardPr
           ) : pendingIdeas.length > 0 ? (
             <div className="space-y-4">
               {pendingIdeas.slice(0, 5).map((idea) => (
-                <IdeaCard 
-                  key={idea.id} 
-                  idea={idea} 
-                  detailed 
-                  showTimeline={true}
-                  onViewActivity={(idea) => setSelectedIdea(idea)}
-                />
+                <div key={idea.id} className="space-y-4">
+                  <IdeaCard 
+                    idea={idea} 
+                    detailed 
+                    showTimeline={true}
+                    onViewActivity={(idea) => setSelectedIdea(idea)}
+                  />
+                  <IdeaFileViewer 
+                    ideaId={idea.id} 
+                    title={`Attachments for: ${idea.title}`}
+                  />
+                </div>
               ))}
             </div>
           ) : (
