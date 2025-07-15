@@ -51,32 +51,51 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
 
   const fetchIdeaLogs = async (ideaId: string) => {
     try {
-      // Fetch status logs
+      // Fetch status logs with proper join
       const { data: statusData, error: statusError } = await supabase
         .from('idea_status_log')
         .select(`
           *,
-          profiles:changed_by(full_name)
+          user_profile:profiles!idea_status_log_changed_by_fkey(full_name)
         `)
         .eq('idea_id', ideaId)
         .order('timestamp', { ascending: false });
 
-      if (statusError) throw statusError;
+      if (statusError) {
+        console.error('Status log error:', statusError);
+        // Fallback: fetch without join
+        const { data: fallbackData } = await supabase
+          .from('idea_status_log')
+          .select('*')
+          .eq('idea_id', ideaId)
+          .order('timestamp', { ascending: false });
+        setStatusLogs(fallbackData || []);
+      } else {
+        setStatusLogs(statusData || []);
+      }
 
-      // Fetch action logs
+      // Fetch action logs with proper join
       const { data: actionData, error: actionError } = await supabase
         .from('idea_action_log')
         .select(`
           *,
-          profiles:performed_by(full_name)
+          user_profile:profiles!idea_action_log_performed_by_fkey(full_name)
         `)
         .eq('idea_id', ideaId)
         .order('timestamp', { ascending: false });
 
-      if (actionError) throw actionError;
-
-      setStatusLogs(statusData || []);
-      setActionLogs(actionData || []);
+      if (actionError) {
+        console.error('Action log error:', actionError);
+        // Fallback: fetch without join
+        const { data: fallbackData } = await supabase
+          .from('idea_action_log')
+          .select('*')
+          .eq('idea_id', ideaId)
+          .order('timestamp', { ascending: false });
+        setActionLogs(fallbackData || []);
+      } else {
+        setActionLogs(actionData || []);
+      }
     } catch (error) {
       console.error('Error fetching idea logs:', error);
     }
@@ -94,12 +113,18 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
 
   const handleIdeaSubmitted = () => {
     setShowForm(false);
+    setSelectedIdea(null);
     fetchIdeas();
   };
 
   const handleEditDraft = (idea: Idea) => {
     setSelectedIdea(idea);
     setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setSelectedIdea(null);
   };
 
   const getStatusCounts = () => {
@@ -119,7 +144,13 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
   };
 
   if (showForm) {
-    return <IdeaSubmissionForm profile={profile} onIdeaSubmitted={handleIdeaSubmitted} />;
+    return (
+      <IdeaSubmissionForm 
+        profile={profile} 
+        onIdeaSubmitted={handleIdeaSubmitted}
+        editingIdea={selectedIdea}
+      />
+    );
   }
 
   const statusCounts = getStatusCounts();

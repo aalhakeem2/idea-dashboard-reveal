@@ -20,17 +20,18 @@ type Profile = Tables<"profiles">;
 interface IdeaSubmissionFormProps {
   profile: Profile;
   onIdeaSubmitted: () => void;
+  editingIdea?: Tables<"ideas"> | null;
 }
 
-export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionFormProps) => {
+export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: IdeaSubmissionFormProps) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "",
-    implementation_cost: "",
-    expected_roi: "",
-    strategic_alignment_score: "",
+    title: editingIdea?.title || "",
+    description: editingIdea?.description || "",
+    category: editingIdea?.category || "",
+    implementation_cost: editingIdea?.implementation_cost?.toString() || "",
+    expected_roi: editingIdea?.expected_roi?.toString() || "",
+    strategic_alignment_score: editingIdea?.strategic_alignment_score?.toString() || "",
   });
   
   // File upload states
@@ -57,106 +58,141 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
     setLoading(true);
 
     try {
-      // Insert the idea first
-      const { data: ideaData, error: ideaError } = await supabase.from("ideas").insert({
-        title: formData.title,
-        description: formData.description,
-        category: formData.category as any,
-        submitter_id: profile.id,
-        implementation_cost: formData.implementation_cost ? parseFloat(formData.implementation_cost) : null,
-        expected_roi: formData.expected_roi ? parseFloat(formData.expected_roi) : null,
-        strategic_alignment_score: formData.strategic_alignment_score ? parseInt(formData.strategic_alignment_score) : null,
-        status: isDraft ? "draft" : "submitted",
-        is_draft: isDraft,
-        submitted_at: isDraft ? null : new Date().toISOString(),
-        language: language,
-      }).select().single();
+      let newIdeaId: string | null = null;
 
-      if (ideaError) throw ideaError;
-      const ideaId = ideaData.id;
-
-      // Log the action
-      await supabase.rpc('log_idea_action', {
-        p_idea_id: ideaId,
-        p_action_type: isDraft ? 'idea_created' : 'idea_submitted',
-        p_action_detail: isDraft ? 'Idea saved as draft' : 'Idea submitted for review'
-      });
-
-      // Upload files and create attachment records
-      const attachmentPromises = [];
-
-      for (const file of feasibilityFiles) {
-        const fileUrl = await uploadFile(file, ideaId, 'feasibility');
-        attachmentPromises.push(
-          supabase.from("idea_attachments").insert({
-            idea_id: ideaId,
-            file_type: 'feasibility',
-            file_name: file.name,
-            file_url: fileUrl,
-            uploaded_by: profile.id,
+      if (editingIdea) {
+        // Update existing idea
+        const { error: ideaError } = await supabase
+          .from("ideas")
+          .update({
+            title: formData.title,
+            description: formData.description,
+            category: formData.category as any,
+            implementation_cost: formData.implementation_cost ? parseFloat(formData.implementation_cost) : null,
+            expected_roi: formData.expected_roi ? parseFloat(formData.expected_roi) : null,
+            strategic_alignment_score: formData.strategic_alignment_score ? parseInt(formData.strategic_alignment_score) : null,
+            status: isDraft ? "draft" : "submitted",
+            is_draft: isDraft,
+            submitted_at: isDraft ? null : new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           })
-        );
-      }
+          .eq('id', editingIdea.id);
 
-      for (const file of pricingFiles) {
-        const fileUrl = await uploadFile(file, ideaId, 'pricing_offer');
-        attachmentPromises.push(
-          supabase.from("idea_attachments").insert({
-            idea_id: ideaId,
-            file_type: 'pricing_offer',
-            file_name: file.name,
-            file_url: fileUrl,
-            uploaded_by: profile.id,
-          })
-        );
-      }
+        if (ideaError) throw ideaError;
 
-      for (const file of prototypeFiles) {
-        const fileUrl = await uploadFile(file, ideaId, 'prototype');
-        attachmentPromises.push(
-          supabase.from("idea_attachments").insert({
-            idea_id: ideaId,
-            file_type: 'prototype',
-            file_name: file.name,
-            file_url: fileUrl,
-            uploaded_by: profile.id,
-          })
-        );
-      }
-
-      await Promise.all(attachmentPromises);
-
-      // Log attachment uploads
-      const allFiles = [...feasibilityFiles, ...pricingFiles, ...prototypeFiles];
-      for (const file of allFiles) {
+        // Log the action
         await supabase.rpc('log_idea_action', {
-          p_idea_id: ideaId,
-          p_action_type: 'attachment_uploaded',
-          p_action_detail: `File uploaded: ${file.name}`
+          p_idea_id: editingIdea.id,
+          p_action_type: 'idea_edited',
+          p_action_detail: isDraft ? 'Draft updated' : 'Idea updated and submitted'
         });
+      } else {
+        // Insert new idea
+        const { data: ideaData, error: ideaError } = await supabase.from("ideas").insert({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category as any,
+          submitter_id: profile.id,
+          implementation_cost: formData.implementation_cost ? parseFloat(formData.implementation_cost) : null,
+          expected_roi: formData.expected_roi ? parseFloat(formData.expected_roi) : null,
+          strategic_alignment_score: formData.strategic_alignment_score ? parseInt(formData.strategic_alignment_score) : null,
+          status: isDraft ? "draft" : "submitted",
+          is_draft: isDraft,
+          submitted_at: isDraft ? null : new Date().toISOString(),
+          language: language,
+        }).select().single();
+
+        if (ideaError) throw ideaError;
+        newIdeaId = ideaData.id;
+
+        // Log the action
+        await supabase.rpc('log_idea_action', {
+          p_idea_id: newIdeaId,
+          p_action_type: isDraft ? 'idea_created' : 'idea_submitted',
+          p_action_detail: isDraft ? 'Idea saved as draft' : 'Idea submitted for review'
+        });
+
+        // Handle file uploads for new ideas only
+        if (newIdeaId) {
+          const attachmentPromises = [];
+
+          for (const file of feasibilityFiles) {
+            const fileUrl = await uploadFile(file, newIdeaId, 'feasibility');
+            attachmentPromises.push(
+              supabase.from("idea_attachments").insert({
+                idea_id: newIdeaId,
+                file_type: 'feasibility',
+                file_name: file.name,
+                file_url: fileUrl,
+                uploaded_by: profile.id,
+              })
+            );
+          }
+
+          for (const file of pricingFiles) {
+            const fileUrl = await uploadFile(file, newIdeaId, 'pricing_offer');
+            attachmentPromises.push(
+              supabase.from("idea_attachments").insert({
+                idea_id: newIdeaId,
+                file_type: 'pricing_offer',
+                file_name: file.name,
+                file_url: fileUrl,
+                uploaded_by: profile.id,
+              })
+            );
+          }
+
+          for (const file of prototypeFiles) {
+            const fileUrl = await uploadFile(file, newIdeaId, 'prototype');
+            attachmentPromises.push(
+              supabase.from("idea_attachments").insert({
+                idea_id: newIdeaId,
+                file_type: 'prototype',
+                file_name: file.name,
+                file_url: fileUrl,
+                uploaded_by: profile.id,
+              })
+            );
+          }
+
+          await Promise.all(attachmentPromises);
+
+          // Log attachment uploads
+          const allFiles = [...feasibilityFiles, ...pricingFiles, ...prototypeFiles];
+          for (const file of allFiles) {
+            await supabase.rpc('log_idea_action', {
+              p_idea_id: newIdeaId,
+              p_action_type: 'attachment_uploaded',
+              p_action_detail: `File uploaded: ${file.name}`
+            });
+          }
+        }
       }
 
       toast({
         title: t('common', 'success'),
-        description: isDraft 
-          ? "Your idea has been saved as a draft!" 
-          : "Your idea has been submitted successfully!",
+        description: editingIdea
+          ? (isDraft ? "Your draft has been updated!" : "Your idea has been updated and submitted!")
+          : (isDraft ? "Your idea has been saved as a draft!" : "Your idea has been submitted successfully!"),
       });
 
-      setFormData({
-        title: "",
-        description: "",
-        category: "",
-        implementation_cost: "",
-        expected_roi: "",
-        strategic_alignment_score: "",
-      });
-      
-      // Reset file uploads
-      setFeasibilityFiles([]);
-      setPricingFiles([]);
-      setPrototypeFiles([]);
-      setStrategicAlignment([]);
+      // Reset form only if not editing
+      if (!editingIdea) {
+        setFormData({
+          title: "",
+          description: "",
+          category: "",
+          implementation_cost: "",
+          expected_roi: "",
+          strategic_alignment_score: "",
+        });
+        
+        // Reset file uploads
+        setFeasibilityFiles([]);
+        setPricingFiles([]);
+        setPrototypeFiles([]);
+        setStrategicAlignment([]);
+      }
 
       onIdeaSubmitted();
     } catch (error) {
@@ -191,11 +227,17 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
           <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
             <Lightbulb className="h-6 w-6 text-blue-600" />
             <CardTitle className={isRTL ? 'text-right' : 'text-left'}>
-              {t('idea_form', 'submit_new_idea')}
+              {editingIdea 
+                ? (language === 'ar' ? 'تعديل الفكرة' : 'Edit Idea')
+                : t('idea_form', 'submit_new_idea')
+              }
             </CardTitle>
           </div>
           <CardDescription className={isRTL ? 'text-right' : 'text-left'}>
-            {t('idea_form', 'share_innovative_idea')}
+            {editingIdea 
+              ? (language === 'ar' ? 'قم بتعديل فكرتك' : 'Update your innovative idea')
+              : t('idea_form', 'share_innovative_idea')
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>

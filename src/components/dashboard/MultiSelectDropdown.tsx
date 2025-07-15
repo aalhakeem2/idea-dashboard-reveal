@@ -70,21 +70,20 @@ export const MultiSelectDropdown = ({
           {value.length === 0 ? (
             <span className="text-muted-foreground">{placeholder}</span>
           ) : (
-            value.slice(0, 2).map((optionKey) => (
-              <Badge key={optionKey} variant="secondary" className="text-xs">
-                {getOptionLabel(optionKey)}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeOption(optionKey);
-                  }}
-                  className="ml-1 hover:bg-destructive/20 rounded-full"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))
+             value.slice(0, 2).map((optionKey) => (
+               <Badge key={optionKey} variant="secondary" className="text-xs flex items-center gap-1">
+                 {getOptionLabel(optionKey)}
+                 <span
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     removeOption(optionKey);
+                   }}
+                   className="ml-1 hover:bg-destructive/20 rounded-full cursor-pointer flex items-center justify-center w-4 h-4"
+                 >
+                   <X className="h-3 w-3" />
+                 </span>
+               </Badge>
+             ))
           )}
           {value.length > 2 && (
             <Badge variant="secondary" className="text-xs">
