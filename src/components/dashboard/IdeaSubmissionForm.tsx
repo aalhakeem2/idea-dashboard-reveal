@@ -128,89 +128,19 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
           p_action_detail: isDraft ? 'Idea saved as draft' : 'Idea submitted for review'
         });
 
-        // Handle file uploads for new ideas only
+        // Handle file uploads for new ideas
         if (newIdeaId) {
-          const attachmentPromises = [];
-
-          for (const file of feasibilityFiles) {
-            const fileUrl = await uploadFile(file, newIdeaId, 'feasibility');
-            attachmentPromises.push(
-              supabase.from("idea_attachments").insert({
-                idea_id: newIdeaId,
-                file_type: 'feasibility',
-                file_name: file.name,
-                file_url: fileUrl,
-                uploaded_by: profile.id,
-              })
-            );
-          }
-
-          for (const file of pricingFiles) {
-            const fileUrl = await uploadFile(file, newIdeaId, 'pricing_offer');
-            attachmentPromises.push(
-              supabase.from("idea_attachments").insert({
-                idea_id: newIdeaId,
-                file_type: 'pricing_offer',
-                file_name: file.name,
-                file_url: fileUrl,
-                uploaded_by: profile.id,
-              })
-            );
-          }
-
-          for (const file of prototypeFiles) {
-            const fileUrl = await uploadFile(file, newIdeaId, 'prototype');
-            attachmentPromises.push(
-              supabase.from("idea_attachments").insert({
-                idea_id: newIdeaId,
-                file_type: 'prototype',
-                file_name: file.name,
-                file_url: fileUrl,
-                uploaded_by: profile.id,
-              })
-            );
-          }
-
-          await Promise.all(attachmentPromises);
-
-          // Log attachment uploads
-          const allFiles = [...feasibilityFiles, ...pricingFiles, ...prototypeFiles];
-          for (const file of allFiles) {
-            await supabase.rpc('log_idea_action', {
-              p_idea_id: newIdeaId,
-              p_action_type: 'attachment_uploaded',
-              p_action_detail: `File uploaded: ${file.name}`
-            });
-          }
+          await handleFileUploads(newIdeaId);
         }
       }
 
-      toast({
-        title: t('common', 'success'),
-        description: editingIdea
-          ? (isDraft ? "Your draft has been updated!" : "Your idea has been updated and submitted!")
-          : (isDraft ? "Your idea has been saved as a draft!" : "Your idea has been submitted successfully!"),
-      });
-
-      // Reset form only if not editing
-      if (!editingIdea) {
-        setFormData({
-          title: "",
-          description: "",
-          category: "",
-          implementation_cost: "",
-          expected_roi: "",
-          strategic_alignment_score: "",
-        });
-        
-        // Reset file uploads
-        setFeasibilityFiles([]);
-        setPricingFiles([]);
-        setPrototypeFiles([]);
-        setStrategicAlignment([]);
+      // Handle file uploads for existing ideas (drafts being updated)
+      if (editingIdea && (feasibilityFiles.length > 0 || pricingFiles.length > 0 || prototypeFiles.length > 0)) {
+        await handleFileUploads(editingIdea.id);
       }
 
-      onIdeaSubmitted();
+      // Complete submission with success message
+      await completeSubmission(isDraft);
     } catch (error) {
       console.error("Error submitting idea:", error);
       toast({
@@ -218,9 +148,94 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted, editingIdea }: Id
         description: "Failed to submit idea",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
+  };
+
+  const handleFileUploads = async (ideaId: string) => {
+    const attachmentPromises = [];
+
+    for (const file of feasibilityFiles) {
+      const fileUrl = await uploadFile(file, ideaId, 'feasibility');
+      attachmentPromises.push(
+        supabase.from("idea_attachments").insert({
+          idea_id: ideaId,
+          file_type: 'feasibility',
+          file_name: file.name,
+          file_url: fileUrl,
+          uploaded_by: profile.id,
+        })
+      );
+    }
+
+    for (const file of pricingFiles) {
+      const fileUrl = await uploadFile(file, ideaId, 'pricing_offer');
+      attachmentPromises.push(
+        supabase.from("idea_attachments").insert({
+          idea_id: ideaId,
+          file_type: 'pricing_offer',
+          file_name: file.name,
+          file_url: fileUrl,
+          uploaded_by: profile.id,
+        })
+      );
+    }
+
+    for (const file of prototypeFiles) {
+      const fileUrl = await uploadFile(file, ideaId, 'prototype');
+      attachmentPromises.push(
+        supabase.from("idea_attachments").insert({
+          idea_id: ideaId,
+          file_type: 'prototype',
+          file_name: file.name,
+          file_url: fileUrl,
+          uploaded_by: profile.id,
+        })
+      );
+    }
+
+    await Promise.all(attachmentPromises);
+
+    // Log attachment uploads
+    const allFiles = [...feasibilityFiles, ...pricingFiles, ...prototypeFiles];
+    for (const file of allFiles) {
+      await supabase.rpc('log_idea_action', {
+        p_idea_id: ideaId,
+        p_action_type: 'attachment_uploaded',
+        p_action_detail: `File uploaded: ${file.name}`
+      });
+    }
+  };
+
+  // Complete the submitIdea function
+  const completeSubmission = async (isDraft: boolean) => {
+    toast({
+      title: t('common', 'success'),
+      description: editingIdea
+        ? (isDraft ? "Your draft has been updated!" : "Your idea has been updated and submitted!")
+        : (isDraft ? "Your idea has been saved as a draft!" : "Your idea has been submitted successfully!"),
+    });
+
+    // Reset form only if not editing
+    if (!editingIdea) {
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        implementation_cost: "",
+        expected_roi: "",
+        strategic_alignment_score: "",
+      });
+      
+      // Reset file uploads
+      setFeasibilityFiles([]);
+      setPricingFiles([]);
+      setPrototypeFiles([]);
+      setStrategicAlignment([]);
+    }
+
+    onIdeaSubmitted();
+    setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
