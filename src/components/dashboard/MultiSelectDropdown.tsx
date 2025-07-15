@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ListOfValue } from "@/hooks/useListOfValues";
+interface Option {
+  value: string;
+  label: string;
+}
 
 interface MultiSelectDropdownProps {
-  options: ListOfValue[];
+  options: Option[];
   value: string[];
   onChange: (value: string[]) => void;
   placeholder?: string;
@@ -49,9 +52,9 @@ export const MultiSelectDropdown = ({
   };
 
   const getOptionLabel = (optionKey: string) => {
-    const option = options.find(opt => opt.value_key === optionKey);
+    const option = options.find(opt => opt.value === optionKey);
     if (!option) return optionKey;
-    return language === 'ar' ? option.value_ar : option.value_en;
+    return option.label;
   };
 
   return (
@@ -96,24 +99,24 @@ export const MultiSelectDropdown = ({
         <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto">
           {options.map((option) => (
             <div
-              key={option.value_key}
+              key={option.value}
               className={`
                 px-3 py-2 cursor-pointer hover:bg-accent transition-colors
-                ${value.includes(option.value_key) ? 'bg-accent' : ''}
+                ${value.includes(option.value) ? 'bg-accent' : ''}
               `}
-              onClick={() => toggleOption(option.value_key)}
+              onClick={() => toggleOption(option.value)}
             >
               <div className="flex items-center space-x-2">
                 <div className={`
                   w-4 h-4 border rounded flex items-center justify-center
-                  ${value.includes(option.value_key) ? 'bg-primary border-primary' : 'border-border'}
+                  ${value.includes(option.value) ? 'bg-primary border-primary' : 'border-border'}
                 `}>
-                  {value.includes(option.value_key) && (
+                  {value.includes(option.value) && (
                     <div className="w-2 h-2 bg-primary-foreground rounded-sm" />
                   )}
                 </div>
                 <span className="text-sm">
-                  {language === 'ar' ? option.value_ar : option.value_en}
+                  {option.label}
                 </span>
               </div>
             </div>
