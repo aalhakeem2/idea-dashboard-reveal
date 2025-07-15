@@ -53,8 +53,7 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
     return `placeholder-url/${fileName}`;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitIdea = async (isDraft: boolean = false) => {
     setLoading(true);
 
     try {
@@ -67,12 +66,21 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
         implementation_cost: formData.implementation_cost ? parseFloat(formData.implementation_cost) : null,
         expected_roi: formData.expected_roi ? parseFloat(formData.expected_roi) : null,
         strategic_alignment_score: formData.strategic_alignment_score ? parseInt(formData.strategic_alignment_score) : null,
-        status: "draft",
+        status: isDraft ? "draft" : "submitted",
+        is_draft: isDraft,
+        submitted_at: isDraft ? null : new Date().toISOString(),
         language: language,
       }).select().single();
 
       if (ideaError) throw ideaError;
       const ideaId = ideaData.id;
+
+      // Log the action
+      await supabase.rpc('log_idea_action', {
+        p_idea_id: ideaId,
+        p_action_type: isDraft ? 'idea_created' : 'idea_submitted',
+        p_action_detail: isDraft ? 'Idea saved as draft' : 'Idea submitted for review'
+      });
 
       // Upload files and create attachment records
       const attachmentPromises = [];
@@ -118,9 +126,21 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
 
       await Promise.all(attachmentPromises);
 
+      // Log attachment uploads
+      const allFiles = [...feasibilityFiles, ...pricingFiles, ...prototypeFiles];
+      for (const file of allFiles) {
+        await supabase.rpc('log_idea_action', {
+          p_idea_id: ideaId,
+          p_action_type: 'attachment_uploaded',
+          p_action_detail: `File uploaded: ${file.name}`
+        });
+      }
+
       toast({
         title: t('common', 'success'),
-        description: "Your idea has been submitted successfully!",
+        description: isDraft 
+          ? "Your idea has been saved as a draft!" 
+          : "Your idea has been submitted successfully!",
       });
 
       setFormData({
@@ -149,6 +169,15 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitIdea(false);
+  };
+
+  const handleSaveDraft = async () => {
+    await submitIdea(true);
   };
 
   const handleChange = (field: string, value: string) => {
@@ -312,15 +341,10 @@ export const IdeaSubmissionForm = ({ profile, onIdeaSubmitted }: IdeaSubmissionF
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => {
-                  // Save as draft logic
-                  toast({
-                    title: "Draft Saved",
-                    description: "Your idea has been saved as a draft",
-                  });
-                }}
+                disabled={loading}
+                onClick={handleSaveDraft}
               >
-                {t('idea_form', 'save_as_draft')}
+                {loading ? t('idea_form', 'saving') : t('idea_form', 'save_as_draft')}
               </Button>
             </div>
           </form>

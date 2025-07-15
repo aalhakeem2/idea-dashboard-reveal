@@ -71,6 +71,44 @@ export type Database = {
           },
         ]
       }
+      idea_action_log: {
+        Row: {
+          action_detail: string | null
+          action_id: string
+          action_type: string
+          idea_id: string
+          performed_by: string
+          timestamp: string
+          user_role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          action_detail?: string | null
+          action_id?: string
+          action_type: string
+          idea_id: string
+          performed_by: string
+          timestamp?: string
+          user_role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          action_detail?: string | null
+          action_id?: string
+          action_type?: string
+          idea_id?: string
+          performed_by?: string
+          timestamp?: string
+          user_role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_action_log_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_attachments: {
         Row: {
           created_at: string | null
@@ -155,6 +193,47 @@ export type Database = {
           },
         ]
       }
+      idea_status_log: {
+        Row: {
+          changed_by: string
+          comments: string | null
+          idea_id: string
+          log_id: string
+          previous_status: string | null
+          status: string
+          timestamp: string
+          user_role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          changed_by: string
+          comments?: string | null
+          idea_id: string
+          log_id?: string
+          previous_status?: string | null
+          status: string
+          timestamp?: string
+          user_role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          changed_by?: string
+          comments?: string | null
+          idea_id?: string
+          log_id?: string
+          previous_status?: string | null
+          status?: string
+          timestamp?: string
+          user_role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_status_log_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ideas: {
         Row: {
           assigned_evaluator_id: string | null
@@ -170,6 +249,8 @@ export type Database = {
           idea_reference_code: string | null
           implementation_cost: number | null
           implemented_at: string | null
+          is_active: boolean
+          is_draft: boolean
           language: string | null
           pricing_offer_url: string | null
           priority_score: number | null
@@ -195,6 +276,8 @@ export type Database = {
           idea_reference_code?: string | null
           implementation_cost?: number | null
           implemented_at?: string | null
+          is_active?: boolean
+          is_draft?: boolean
           language?: string | null
           pricing_offer_url?: string | null
           priority_score?: number | null
@@ -220,6 +303,8 @@ export type Database = {
           idea_reference_code?: string | null
           implementation_cost?: number | null
           implemented_at?: string | null
+          is_active?: boolean
+          is_draft?: boolean
           language?: string | null
           pricing_offer_url?: string | null
           priority_score?: number | null
@@ -357,6 +442,14 @@ export type Database = {
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      log_idea_action: {
+        Args: {
+          p_idea_id: string
+          p_action_type: string
+          p_action_detail?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
