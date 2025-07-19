@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -8,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ClipboardCheck, Star } from "lucide-react";
+import { ClipboardCheck, Star, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 type Idea = Tables<"ideas">;
@@ -18,9 +19,10 @@ interface EvaluationFormProps {
   idea: Idea;
   profile: Profile;
   onEvaluationSubmitted: () => void;
+  onCancel: () => void;
 }
 
-export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted }: EvaluationFormProps) => {
+export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel }: EvaluationFormProps) => {
   const [loading, setLoading] = useState(false);
   const [scores, setScores] = useState({
     feasibility_score: [5],
@@ -78,11 +80,22 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted }: Evaluat
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
-          <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
-            <ClipboardCheck className="h-6 w-6 text-blue-600" />
-            <CardTitle className={isRTL ? 'text-right' : 'text-left'}>
-              Evaluate Idea
-            </CardTitle>
+          <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+              <ClipboardCheck className="h-6 w-6 text-blue-600" />
+              <CardTitle className={isRTL ? 'text-right' : 'text-left'}>
+                Evaluate Idea
+              </CardTitle>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onCancel}
+              className="flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
           </div>
           <CardDescription className={isRTL ? 'text-right' : 'text-left'}>
             Provide your evaluation for: {idea.idea_reference_code || idea.title}
@@ -211,6 +224,14 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted }: Evaluat
             </div>
 
             <div className={`flex justify-end space-x-4 ${isRTL ? 'space-x-reverse' : ''}`}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={loading} className="flex items-center gap-2">
                 <Star className="h-4 w-4" />
                 {loading ? "Submitting..." : "Submit Evaluation"}

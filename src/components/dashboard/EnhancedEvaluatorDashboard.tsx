@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -81,6 +80,11 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
     fetchData();
   };
 
+  const handleEvaluationCancelled = () => {
+    setShowEvaluationForm(false);
+    setSelectedIdea(null);
+  };
+
   const handleEvaluateIdea = (idea: Idea) => {
     setSelectedIdea(idea);
     setShowEvaluationForm(true);
@@ -133,6 +137,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
         idea={selectedIdea}
         profile={profile}
         onEvaluationSubmitted={handleEvaluationSubmitted}
+        onCancel={handleEvaluationCancelled}
       />
     );
   }
