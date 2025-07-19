@@ -105,6 +105,8 @@ export const Dashboard = ({ user }: DashboardProps) => {
   }
 
   const renderDashboard = () => {
+    console.log("Dashboard: Rendering for profile role:", profile.role, "Active view:", activeView);
+    
     switch (profile.role) {
       case "submitter":
         if (activeView === "dashboard") {
@@ -113,10 +115,13 @@ export const Dashboard = ({ user }: DashboardProps) => {
           return <EnhancedSubmitterDashboard profile={profile} />;
         }
       case "evaluator":
+        console.log("Dashboard: Rendering EnhancedEvaluatorDashboard");
         return <EnhancedEvaluatorDashboard profile={profile} />;
       case "management":
+        console.log("Dashboard: Rendering ManagementDashboard");
         return <ManagementDashboard profile={profile} activeView={activeView} />;
       default:
+        console.log("Dashboard: Defaulting to SubmitterDashboard");
         return <SubmitterDashboard profile={profile} activeView={activeView} />;
     }
   };

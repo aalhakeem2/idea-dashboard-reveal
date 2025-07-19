@@ -27,6 +27,8 @@ export const EnhancedEvaluatorDashboard = ({ profile }: EnhancedEvaluatorDashboa
 
   const fetchData = async () => {
     try {
+      console.log("Evaluator Dashboard: Fetching data for profile:", profile.id);
+      
       // Fetch ideas that are ready for evaluation
       const { data: ideasData, error: ideasError } = await supabase
         .from("ideas")
@@ -34,7 +36,12 @@ export const EnhancedEvaluatorDashboard = ({ profile }: EnhancedEvaluatorDashboa
         .in("status", ["submitted", "under_review"])
         .order("submitted_at", { ascending: true });
 
-      if (ideasError) throw ideasError;
+      if (ideasError) {
+        console.error("Error fetching ideas:", ideasError);
+        throw ideasError;
+      }
+      
+      console.log("Evaluator Dashboard: Found ideas:", ideasData?.length || 0, ideasData);
       setIdeas(ideasData || []);
 
       // Fetch evaluator's existing evaluations
@@ -43,7 +50,12 @@ export const EnhancedEvaluatorDashboard = ({ profile }: EnhancedEvaluatorDashboa
         .select("*")
         .eq("evaluator_id", profile.id);
 
-      if (evaluationsError) throw evaluationsError;
+      if (evaluationsError) {
+        console.error("Error fetching evaluations:", evaluationsError);
+        throw evaluationsError;
+      }
+      
+      console.log("Evaluator Dashboard: Found evaluations:", evaluationsData?.length || 0);
       setEvaluations(evaluationsData || []);
 
     } catch (error) {

@@ -130,6 +130,8 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
   const fetchRecentIdeas = async () => {
     try {
+      console.log("Management Dashboard: Fetching recent ideas");
+      
       const { data, error } = await supabase
         .from("ideas")
         .select("*")
@@ -137,7 +139,12 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
         .order("created_at", { ascending: false })
         .limit(5);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching recent ideas:", error);
+        throw error;
+      }
+      
+      console.log("Management Dashboard: Found recent ideas:", data?.length || 0, data);
       setRecentIdeas(data || []);
     } catch (error) {
       console.error("Error fetching recent ideas:", error);
