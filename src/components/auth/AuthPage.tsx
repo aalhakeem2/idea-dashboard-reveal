@@ -19,10 +19,10 @@ export const AuthPage = () => {
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
 
-  // Test user accounts with roles
+  // Test user accounts with roles - matched to actual database users
   const testUsers = [
     { 
-      email: "submitter@you.com", 
+      email: "hani.gazim@gmail.com", 
       name: "Hani Gazim", 
       role: "Submitter",
       userRole: "submitter" as const,
@@ -30,24 +30,17 @@ export const AuthPage = () => {
     },
     { 
       email: "evaluator@you.com", 
-      name: "Abdurhman Alhakeem", 
+      name: "Bob Smith", 
       role: "Evaluator",
       userRole: "evaluator" as const,
-      id: "22222222-2222-2222-2222-222222222222"
+      id: "f506d6d7-bae4-4268-88c6-88cfb194dd7f"
     },
     { 
-      email: "management@you.com", 
+      email: "osama.murshed@gmail.com", 
       name: "Osama Murshed", 
       role: "Management",
       userRole: "management" as const,
       id: "33333333-3333-3333-3333-333333333333"
-    },
-    { 
-      email: "test@you.com", 
-      name: "Test User", 
-      role: "Admin",
-      userRole: "management" as const,
-      id: "44444444-4444-4444-4444-444444444444"
     },
   ];
 
@@ -208,7 +201,7 @@ export const AuthPage = () => {
   };
 
   const handleQuickAccess = async () => {
-    const testUser = testUsers.find(u => u.email === "test@you.com")!;
+    const testUser = testUsers[0]; // Default to first user (Hani Gazim - Submitter)
     await handleTestLogin(testUser);
   };
 
