@@ -17,6 +17,8 @@ export type Database = {
       evaluations: {
         Row: {
           created_at: string | null
+          enrichment_score: number | null
+          evaluation_type: Database["public"]["Enums"]["evaluation_type"]
           evaluator_id: string
           feasibility_score: number | null
           feedback: string | null
@@ -30,6 +32,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          enrichment_score?: number | null
+          evaluation_type?: Database["public"]["Enums"]["evaluation_type"]
           evaluator_id: string
           feasibility_score?: number | null
           feedback?: string | null
@@ -43,6 +47,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          enrichment_score?: number | null
+          evaluation_type?: Database["public"]["Enums"]["evaluation_type"]
           evaluator_id?: string
           feasibility_score?: number | null
           feedback?: string | null
@@ -64,6 +70,58 @@ export type Database = {
           },
           {
             foreignKeyName: "evaluations_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluator_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string
+          evaluation_type: Database["public"]["Enums"]["evaluation_type"]
+          evaluator_id: string
+          id: string
+          idea_id: string
+          is_active: boolean | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by: string
+          evaluation_type: Database["public"]["Enums"]["evaluation_type"]
+          evaluator_id: string
+          id?: string
+          idea_id: string
+          is_active?: boolean | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string
+          evaluation_type?: Database["public"]["Enums"]["evaluation_type"]
+          evaluator_id?: string
+          id?: string
+          idea_id?: string
+          is_active?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluator_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluator_assignments_evaluator_id_fkey"
+            columns: ["evaluator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluator_assignments_idea_id_fkey"
             columns: ["idea_id"]
             isOneToOne: false
             referencedRelation: "ideas"
@@ -375,6 +433,9 @@ export type Database = {
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          specialization:
+            | Database["public"]["Enums"]["evaluation_type"][]
+            | null
           updated_at: string | null
         }
         Insert: {
@@ -385,6 +446,9 @@ export type Database = {
           full_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
+          specialization?:
+            | Database["public"]["Enums"]["evaluation_type"][]
+            | null
           updated_at?: string | null
         }
         Update: {
@@ -395,6 +459,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
+          specialization?:
+            | Database["public"]["Enums"]["evaluation_type"][]
+            | null
           updated_at?: string | null
         }
         Relationships: []
@@ -438,9 +505,28 @@ export type Database = {
         Args: { idea_uuid: string }
         Returns: number
       }
+      calculate_comprehensive_evaluation_score: {
+        Args: { idea_uuid: string }
+        Returns: {
+          technology_score: number
+          finance_score: number
+          commercial_score: number
+          overall_average: number
+          enrichment_average: number
+        }[]
+      }
       generate_idea_reference_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_evaluation_progress: {
+        Args: { p_idea_id: string }
+        Returns: {
+          total_assigned: number
+          total_completed: number
+          progress_percentage: number
+          missing_types: Database["public"]["Enums"]["evaluation_type"][]
+        }[]
       }
       get_user_role: {
         Args: { user_id: string }
@@ -456,6 +542,7 @@ export type Database = {
       }
     }
     Enums: {
+      evaluation_type: "technology" | "finance" | "commercial"
       idea_category:
         | "innovation"
         | "process_improvement"
@@ -598,6 +685,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      evaluation_type: ["technology", "finance", "commercial"],
       idea_category: [
         "innovation",
         "process_improvement",
