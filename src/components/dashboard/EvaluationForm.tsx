@@ -55,16 +55,16 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
       if (error) throw error;
 
       toast({
-        title: "Evaluation Submitted",
-        description: "Your evaluation has been submitted successfully!",
+        title: t('evaluation', 'evaluation_submitted'),
+        description: t('evaluation', 'evaluation_submitted_success'),
       });
 
       onEvaluationSubmitted();
     } catch (error) {
       console.error("Error submitting evaluation:", error);
       toast({
-        title: "Error",
-        description: "Failed to submit evaluation",
+        title: t('evaluation', 'error'),
+        description: t('evaluation', 'failed_to_submit'),
         variant: "destructive",
       });
     } finally {
@@ -84,7 +84,7 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
             <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
               <ClipboardCheck className="h-6 w-6 text-blue-600" />
               <CardTitle className={isRTL ? 'text-right' : 'text-left'}>
-                Evaluate Idea
+                {t('evaluation', 'evaluate_idea')}
               </CardTitle>
             </div>
             <Button 
@@ -94,31 +94,33 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
               className="flex items-center gap-2"
             >
               <X className="h-4 w-4" />
-              Cancel
+              {t('evaluation', 'cancel')}
             </Button>
           </div>
           <CardDescription className={isRTL ? 'text-right' : 'text-left'}>
-            Provide your evaluation for: {idea.idea_reference_code || idea.title}
+            {t('evaluation', 'provide_evaluation_for')} {idea.idea_reference_code || idea.title}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Anonymized Idea Info */}
-            <div className="bg-muted p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Idea Details</h3>
+            <div className={`bg-muted p-4 rounded-lg ${isRTL ? 'text-right' : 'text-left'}`}>
+              <h3 className={`font-semibold mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                {t('evaluation', 'idea_details')}
+              </h3>
               <div className="space-y-2">
-                <p><strong>Reference:</strong> {idea.idea_reference_code}</p>
-                <p><strong>Title:</strong> {idea.title}</p>
-                <p><strong>Description:</strong> {idea.description}</p>
-                <p><strong>Category:</strong> {idea.category}</p>
+                <p><strong>{t('evaluation', 'reference')}:</strong> {idea.idea_reference_code}</p>
+                <p><strong>{t('evaluation', 'title')}:</strong> {idea.title}</p>
+                <p><strong>{t('evaluation', 'description')}:</strong> {idea.description}</p>
+                <p><strong>{t('evaluation', 'category')}:</strong> {idea.category}</p>
               </div>
             </div>
 
             {/* Evaluation Scores */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label className="text-sm font-medium">
-                  Feasibility Score: {scores.feasibility_score[0]}/10
+                <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t('evaluation', 'feasibility_score')}: {scores.feasibility_score[0]}/10
                 </Label>
                 <Slider
                   value={scores.feasibility_score}
@@ -128,15 +130,15 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
                   step={1}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Not Feasible</span>
-                  <span>Highly Feasible</span>
+                <div className={`flex justify-between text-xs text-muted-foreground ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span>{t('evaluation', 'not_feasible')}</span>
+                  <span>{t('evaluation', 'highly_feasible')}</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">
-                  Impact Score: {scores.impact_score[0]}/10
+                <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t('evaluation', 'impact_score')}: {scores.impact_score[0]}/10
                 </Label>
                 <Slider
                   value={scores.impact_score}
@@ -146,15 +148,15 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
                   step={1}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Low Impact</span>
-                  <span>High Impact</span>
+                <div className={`flex justify-between text-xs text-muted-foreground ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span>{t('evaluation', 'low_impact')}</span>
+                  <span>{t('evaluation', 'high_impact')}</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">
-                  Innovation Score: {scores.innovation_score[0]}/10
+                <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t('evaluation', 'innovation_score')}: {scores.innovation_score[0]}/10
                 </Label>
                 <Slider
                   value={scores.innovation_score}
@@ -164,15 +166,15 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
                   step={1}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Not Innovative</span>
-                  <span>Highly Innovative</span>
+                <div className={`flex justify-between text-xs text-muted-foreground ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span>{t('evaluation', 'not_innovative')}</span>
+                  <span>{t('evaluation', 'highly_innovative')}</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">
-                  Overall Score: {scores.overall_score[0]}/10
+                <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
+                  {t('evaluation', 'overall_score')}: {scores.overall_score[0]}/10
                 </Label>
                 <Slider
                   value={scores.overall_score}
@@ -182,9 +184,9 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
                   step={1}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Poor</span>
-                  <span>Excellent</span>
+                <div className={`flex justify-between text-xs text-muted-foreground ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span>{t('evaluation', 'poor')}</span>
+                  <span>{t('evaluation', 'excellent')}</span>
                 </div>
               </div>
             </div>
@@ -192,11 +194,11 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
             {/* Feedback */}
             <div className="space-y-2">
               <Label htmlFor="feedback" className={isRTL ? 'text-right block' : 'text-left'}>
-                Detailed Feedback
+                {t('evaluation', 'detailed_feedback')}
               </Label>
               <Textarea
                 id="feedback"
-                placeholder="Provide detailed feedback on the idea..."
+                placeholder={t('evaluation', 'feedback_placeholder')}
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 className={isRTL ? 'text-right' : 'text-left'}
@@ -208,33 +210,33 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
             {/* Recommendation */}
             <div className="space-y-2">
               <Label htmlFor="recommendation" className={isRTL ? 'text-right block' : 'text-left'}>
-                Recommendation
+                {t('evaluation', 'recommendation')}
               </Label>
               <Select value={recommendation} onValueChange={setRecommendation}>
                 <SelectTrigger className={isRTL ? 'text-right' : 'text-left'}>
-                  <SelectValue placeholder="Select your recommendation" />
+                  <SelectValue placeholder={t('evaluation', 'select_recommendation')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="approve">Approve for Implementation</SelectItem>
-                  <SelectItem value="approve_with_modifications">Approve with Modifications</SelectItem>
-                  <SelectItem value="needs_more_info">Needs More Information</SelectItem>
-                  <SelectItem value="reject">Reject</SelectItem>
+                  <SelectItem value="approve">{t('evaluation', 'approve')}</SelectItem>
+                  <SelectItem value="approve_with_modifications">{t('evaluation', 'approve_with_modifications')}</SelectItem>
+                  <SelectItem value="needs_more_info">{t('evaluation', 'needs_more_info')}</SelectItem>
+                  <SelectItem value="reject">{t('evaluation', 'reject')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className={`flex justify-end space-x-4 ${isRTL ? 'space-x-reverse' : ''}`}>
+            <div className={`flex ${isRTL ? 'justify-start space-x-4 space-x-reverse' : 'justify-end space-x-4'}`}>
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={onCancel}
                 disabled={loading}
               >
-                Cancel
+                {t('evaluation', 'cancel')}
               </Button>
               <Button type="submit" disabled={loading} className="flex items-center gap-2">
                 <Star className="h-4 w-4" />
-                {loading ? "Submitting..." : "Submit Evaluation"}
+                {loading ? t('evaluation', 'submitting') : t('evaluation', 'submit_evaluation')}
               </Button>
             </div>
           </form>
