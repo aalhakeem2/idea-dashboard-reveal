@@ -436,7 +436,8 @@ export const AuthPage = () => {
                             <div className={`w-3 h-3 rounded-full ${
                               user.role === 'Submitter' ? 'bg-you-blue' : 
                               user.role === 'Evaluator' ? 'bg-you-green' : 
-                              user.role === 'Management' ? 'bg-you-orange' : 'bg-you-purple'
+                              user.role === 'Management' ? 'bg-you-orange' : 
+                              user.role === 'Admin' ? 'bg-you-purple' : 'bg-gray-400'
                             }`}></div>
                             <div>
                               <div className="font-medium text-sm text-gray-900">{user.name}</div>
