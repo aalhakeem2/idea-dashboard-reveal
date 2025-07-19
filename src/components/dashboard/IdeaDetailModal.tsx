@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -171,7 +170,7 @@ export const IdeaDetailModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
         <DialogHeader className="p-6 pb-0">
           <div className={`flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
             <div className="flex-1">
@@ -200,16 +199,10 @@ export const IdeaDetailModal = ({
                 )}
               </div>
             </div>
-            {showEvaluateButton && onEvaluate && (
-              <Button onClick={() => onEvaluate(idea)} className="gap-2">
-                <ClipboardCheck className="h-4 w-4" />
-                {t('dashboard', 'evaluate')}
-              </Button>
-            )}
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-120px)]">
+        <ScrollArea className="flex-1 max-h-[calc(90vh-200px)]">
           <div className="p-6 space-y-6">
             {/* Description */}
             <Card>
@@ -367,6 +360,20 @@ export const IdeaDetailModal = ({
             />
           </div>
         </ScrollArea>
+
+        {/* Footer with Evaluation Button */}
+        {showEvaluateButton && onEvaluate && (
+          <div className="p-6 pt-0 border-t bg-background">
+            <Button 
+              onClick={() => onEvaluate(idea)} 
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base gap-3 shadow-sm"
+              size="lg"
+            >
+              <ClipboardCheck className="h-5 w-5" />
+              {t('dashboard', 'evaluate')} This Idea
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
