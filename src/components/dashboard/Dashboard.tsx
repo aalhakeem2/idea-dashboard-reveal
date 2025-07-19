@@ -109,20 +109,13 @@ export const Dashboard = ({ user }: DashboardProps) => {
     
     switch (profile.role) {
       case "submitter":
-        if (activeView === "dashboard") {
-          return <SubmitterDashboard profile={profile} activeView={activeView} />;
-        } else {
-          return <EnhancedSubmitterDashboard profile={profile} />;
-        }
+        return <EnhancedSubmitterDashboard profile={profile} activeView={activeView} />;
       case "evaluator":
-        console.log("Dashboard: Rendering EnhancedEvaluatorDashboard");
-        return <EnhancedEvaluatorDashboard profile={profile} />;
+        return <EnhancedEvaluatorDashboard profile={profile} activeView={activeView} />;
       case "management":
-        console.log("Dashboard: Rendering ManagementDashboard");
         return <ManagementDashboard profile={profile} activeView={activeView} />;
       default:
-        console.log("Dashboard: Defaulting to SubmitterDashboard");
-        return <SubmitterDashboard profile={profile} activeView={activeView} />;
+        return <EnhancedSubmitterDashboard profile={profile} activeView={activeView} />;
     }
   };
 

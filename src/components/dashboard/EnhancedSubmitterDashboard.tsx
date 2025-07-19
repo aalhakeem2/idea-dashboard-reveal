@@ -18,14 +18,15 @@ type Idea = Tables<"ideas">;
 
 interface EnhancedSubmitterDashboardProps {
   profile: Profile;
+  activeView: string;
 }
 
-export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProps> = ({ profile }) => {
+export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProps> = ({ profile, activeView }) => {
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [allIdeas, setAllIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
-  const [activeView, setActiveView] = useState('overview');
   const [statusLogs, setStatusLogs] = useState([]);
   const [actionLogs, setActionLogs] = useState([]);
   const { t, language } = useLanguage();
@@ -46,6 +47,22 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
       console.error('Error fetching ideas:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllIdeas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_draft', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAllIdeas(data || []);
+    } catch (error) {
+      console.error('Error fetching all ideas:', error);
     }
   };
 
@@ -103,7 +120,10 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
 
   useEffect(() => {
     fetchIdeas();
-  }, [profile.id]);
+    if (activeView === 'ideas') {
+      fetchAllIdeas();
+    }
+  }, [profile.id, activeView]);
 
   useEffect(() => {
     if (selectedIdea) {
@@ -153,12 +173,29 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
     );
   }
 
+  // Render based on active view
+  const renderContent = () => {
+    switch (activeView) {
+      case "dashboard":
+        return renderDashboardView();
+      case "ideas":
+        return renderAllIdeasView();
+      case "submit":
+        setShowForm(true);
+        return null;
+      case "my-ideas":
+        return renderMyIdeasView();
+      default:
+        return renderDashboardView();
+    }
+  };
+
   const statusCounts = getStatusCounts();
   const submittedIdeas = getSubmittedIdeas();
   const totalSubmittedIdeas = submittedIdeas.length;
   const draftCount = getDraftCount();
 
-  return (
+  const renderDashboardView = () => (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -176,148 +213,219 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
         </Button>
       </div>
 
-      {/* Main Content */}
-      <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            {language === 'ar' ? 'نظرة عامة' : 'Overview'}
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'إجمالي الأفكار' : 'Total Ideas'}
+            </CardTitle>
+            <Lightbulb className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalSubmittedIdeas}</div>
+            <p className="text-xs text-muted-foreground">
+              {language === 'ar' ? `${draftCount} مسودات` : `${draftCount} drafts`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'قيد المراجعة' : 'Under Review'}
+            </CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(statusCounts['submitted'] || 0) + (statusCounts['under_review'] || 0) + (statusCounts['under_evaluation'] || 0)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'موافق عليها' : 'Approved'}
+            </CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {statusCounts['approved'] || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'معدل النجاح' : 'Success Rate'}
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalSubmittedIdeas > 0 
+                ? Math.round(((statusCounts['approved'] || 0) / totalSubmittedIdeas) * 100) 
+                : 0}%
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Ideas */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5" />
+            {language === 'ar' ? 'أفكاري الأخيرة' : 'Recent Ideas'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+            </div>
+          ) : submittedIdeas.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg mb-2">
+                {language === 'ar' ? 'لا توجد أفكار مُرسلة بعد' : 'No submitted ideas yet'}
+              </p>
+              <p className="mb-4">
+                {language === 'ar' 
+                  ? 'ابدأ بإرسال فكرتك الأولى!' 
+                  : 'Start by submitting your first idea!'
+                }
+              </p>
+              <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                {language === 'ar' ? 'فكرة جديدة' : 'New Idea'}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {submittedIdeas.slice(0, 5).map((idea) => (
+                <IdeaCard 
+                  key={idea.id} 
+                  idea={idea} 
+                  showTimeline={true}
+                  onViewActivity={(idea) => {
+                    setSelectedIdea(idea);
+                  }}
+                />
+              ))}
+              {submittedIdeas.length > 5 && (
+                <div className="text-center pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'ar' 
+                      ? `و ${submittedIdeas.length - 5} أفكار أخرى` 
+                      : `And ${submittedIdeas.length - 5} more ideas`
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderAllIdeasView = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">
+          {language === 'ar' ? 'جميع الأفكار' : 'All Ideas'}
+        </h1>
+        <p className="text-muted-foreground">
+          {language === 'ar' ? 'تصفح جميع الأفكار المُرسلة في النظام' : 'Browse all submitted ideas in the system'}
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8">
+          {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+        </div>
+      ) : allIdeas.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p>{language === 'ar' ? 'لا توجد أفكار متاحة' : 'No ideas available'}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {allIdeas.map((idea) => (
+            <IdeaCard 
+              key={idea.id} 
+              idea={idea} 
+              detailed 
+              showTimeline={true}
+              onViewActivity={() => setSelectedIdea(idea)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderMyIdeasView = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {language === 'ar' ? 'أفكاري' : 'My Ideas'}
+          </h1>
+          <p className="text-muted-foreground">
+            {language === 'ar' ? 'إدارة جميع أفكاري المُرسلة والمسودات' : 'Manage all my submitted ideas and drafts'}
+          </p>
+        </div>
+        <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          {language === 'ar' ? 'فكرة جديدة' : 'New Idea'}
+        </Button>
+      </div>
+
+      <Tabs defaultValue="submitted" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="submitted" className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
+            {language === 'ar' ? 'المُرسلة' : 'Submitted'}
           </TabsTrigger>
           <TabsTrigger value="drafts" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             {language === 'ar' ? 'المسودات' : 'Drafts'}
             {draftCount > 0 && <Badge variant="secondary">{draftCount}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="submitted" className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4" />
-            {language === 'ar' ? 'المُرسلة' : 'Submitted'}
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            {language === 'ar' ? 'النشاط' : 'Activity'}
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <TabsContent value="submitted" className="space-y-6">
+          {loading ? (
+            <div className="text-center py-8">
+              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+            </div>
+          ) : submittedIdeas.length === 0 ? (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {language === 'ar' ? 'إجمالي الأفكار' : 'Total Ideas'}
-                </CardTitle>
-                <Lightbulb className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalSubmittedIdeas}</div>
-                <p className="text-xs text-muted-foreground">
-                  {language === 'ar' ? `${draftCount} مسودات` : `${draftCount} drafts`}
-                </p>
+              <CardContent className="py-8 text-center">
+                <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>{language === 'ar' ? 'لا توجد أفكار مُرسلة' : 'No submitted ideas yet'}</p>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {language === 'ar' ? 'قيد المراجعة' : 'Under Review'}
-                </CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(statusCounts['submitted'] || 0) + (statusCounts['under_review'] || 0) + (statusCounts['under_evaluation'] || 0)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {language === 'ar' ? 'موافق عليها' : 'Approved'}
-                </CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {statusCounts['approved'] || 0}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {language === 'ar' ? 'معدل النجاح' : 'Success Rate'}
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {totalSubmittedIdeas > 0 
-                    ? Math.round(((statusCounts['approved'] || 0) / totalSubmittedIdeas) * 100) 
-                    : 0}%
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Ideas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-5 w-5" />
-                {language === 'ar' ? 'أفكاري الأخيرة' : 'Recent Ideas'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                </div>
-              ) : submittedIdeas.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">
-                    {language === 'ar' ? 'لا توجد أفكار مُرسلة بعد' : 'No submitted ideas yet'}
-                  </p>
-                  <p className="mb-4">
-                    {language === 'ar' 
-                      ? 'ابدأ بإرسال فكرتك الأولى!' 
-                      : 'Start by submitting your first idea!'
-                    }
-                  </p>
-                  <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    {language === 'ar' ? 'فكرة جديدة' : 'New Idea'}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {submittedIdeas.slice(0, 5).map((idea) => (
-                    <IdeaCard 
-                      key={idea.id} 
-                      idea={idea} 
-                      showTimeline={true}
-                      onViewActivity={(idea) => {
-                        setSelectedIdea(idea);
-                        setActiveView('timeline');
-                      }}
-                    />
-                  ))}
-                  {submittedIdeas.length > 5 && (
-                    <div className="text-center pt-4">
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'ar' 
-                          ? `و ${submittedIdeas.length - 5} أفكار أخرى` 
-                          : `And ${submittedIdeas.length - 5} more ideas`
-                        }
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          ) : (
+            <div className="space-y-4">
+              {submittedIdeas.map((idea) => (
+                <IdeaCard 
+                  key={idea.id} 
+                  idea={idea} 
+                  detailed 
+                  showTimeline={true}
+                  onViewActivity={(idea) => setSelectedIdea(idea)}
+                />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="drafts">
@@ -327,107 +435,35 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
             onRefresh={fetchIdeas}
           />
         </TabsContent>
-
-        <TabsContent value="submitted" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-5 w-5" />
-                {language === 'ar' ? 'أفكاري المُرسلة' : 'My Submitted Ideas'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                </div>
-              ) : submittedIdeas.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{language === 'ar' ? 'لا توجد أفكار مُرسلة' : 'No submitted ideas yet'}</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {submittedIdeas.map((idea) => (
-                    <IdeaCard 
-                      key={idea.id} 
-                      idea={idea} 
-                      detailed 
-                      showTimeline={true}
-                      onViewActivity={(idea) => {
-                        setSelectedIdea(idea);
-                        setActiveView('timeline');
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="timeline" className="space-y-6">
-          {selectedIdea ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">
-                  {language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:'} {selectedIdea.title}
-                </h2>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelectedIdea(null)}
-                >
-                  {language === 'ar' ? 'رجوع' : 'Back'}
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <IdeaTimeline statusLogs={statusLogs} currentStatus={selectedIdea.status} />
-                <IdeaActionLog actionLogs={actionLogs} />
-              </div>
-            </div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {language === 'ar' ? 'سجل النشاط' : 'Activity Timeline'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>
-                    {language === 'ar' 
-                      ? 'اختر فكرة لعرض سجل النشاط' 
-                      : 'Select an idea to view activity timeline'
-                    }
-                  </p>
-                </div>
-                
-                {submittedIdeas.length > 0 && (
-                  <div className="mt-6 space-y-2">
-                    <h3 className="font-medium mb-3">
-                      {language === 'ar' ? 'اختر فكرة:' : 'Select an idea:'}
-                    </h3>
-                    {submittedIdeas.map((idea) => (
-                      <div 
-                        key={idea.id}
-                        className="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-                        onClick={() => setSelectedIdea(idea)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{idea.title}</span>
-                          <Badge variant="outline">{idea.status}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
       </Tabs>
+
+      {/* Activity Timeline for Selected Idea */}
+      {selectedIdea && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:'} {selectedIdea.title}
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedIdea(null)}
+              >
+                {language === 'ar' ? 'إغلاق' : 'Close'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <IdeaTimeline statusLogs={statusLogs} currentStatus={selectedIdea.status} />
+              <IdeaActionLog actionLogs={actionLogs} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
+
+  return renderContent();
 };

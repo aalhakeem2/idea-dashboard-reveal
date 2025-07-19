@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Users, Lightbulb, CheckCircle, Clock, Target, Activity } from "lucide-react";
+import { TrendingUp, Users, Lightbulb, CheckCircle, Clock, Target, Activity, Settings, UserCheck } from "lucide-react";
 import { IdeaCard } from "./IdeaCard";
 import { IdeaTimeline } from "./IdeaTimeline";
 import { IdeaActionLog } from "./IdeaActionLog";
@@ -31,6 +30,8 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
   const [recentIdeas, setRecentIdeas] = useState<Idea[]>([]);
+  const [allIdeas, setAllIdeas] = useState<Idea[]>([]);
+  const [allUsers, setAllUsers] = useState<Profile[]>([]);
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [statusLogs, setStatusLogs] = useState([]);
   const [actionLogs, setActionLogs] = useState([]);
@@ -44,7 +45,13 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
     fetchCategoryData();
     fetchStatusData();
     fetchRecentIdeas();
-  }, []);
+    if (activeView === 'ideas') {
+      fetchAllIdeas();
+    }
+    if (activeView === 'users') {
+      fetchAllUsers();
+    }
+  }, [activeView]);
 
   useEffect(() => {
     if (selectedIdea) {
@@ -151,6 +158,35 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
     }
   };
 
+  const fetchAllIdeas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("ideas")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAllIdeas(data || []);
+    } catch (error) {
+      console.error("Error fetching all ideas:", error);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAllUsers(data || []);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+    }
+  };
+
   const fetchIdeaLogs = async (ideaId: string) => {
     try {
       // Fetch status logs
@@ -181,6 +217,23 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
       setActionLogs(actionData || []);
     } catch (error) {
       console.error('Error fetching idea logs:', error);
+    }
+  };
+
+  const renderContent = () => {
+    switch (activeView) {
+      case "dashboard":
+        return renderDashboardOverview();
+      case "ideas":
+        return renderAllIdeasView();
+      case "analytics":
+        return renderAnalyticsView();
+      case "users":
+        return renderUsersView();
+      case "settings":
+        return renderSettingsView();
+      default:
+        return renderDashboardOverview();
     }
   };
 
@@ -378,5 +431,223 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
     </div>
   );
 
-  return renderDashboardOverview();
+  const renderAllIdeasView = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">
+          {language === 'ar' ? 'جميع الأفكار' : 'All Ideas'}
+        </h1>
+        <p className="text-muted-foreground">
+          {language === 'ar' ? 'إدارة ومراجعة جميع الأفكار في النظام' : 'Manage and review all ideas in the system'}
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8">
+          {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+        </div>
+      ) : allIdeas.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p>{language === 'ar' ? 'لا توجد أفكار متاحة' : 'No ideas available'}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {allIdeas.map((idea) => (
+            <IdeaCard 
+              key={idea.id} 
+              idea={idea} 
+              detailed 
+              showTimeline={true}
+              onViewActivity={(idea) => setSelectedIdea(idea)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderAnalyticsView = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">
+          {language === 'ar' ? 'التحليلات' : 'Analytics'}
+        </h1>
+        <p className="text-muted-foreground">
+          {language === 'ar' ? 'تحليل شامل لأداء النظام والأفكار' : 'Comprehensive system and idea performance analysis'}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ideas by Status</CardTitle>
+            <CardDescription>Current distribution of idea statuses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={statusData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Ideas by Category</CardTitle>
+            <CardDescription>Distribution across different categories</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={categoryData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {categoryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderUsersView = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">
+          {language === 'ar' ? 'إدارة المستخدمين' : 'User Management'}
+        </h1>
+        <p className="text-muted-foreground">
+          {language === 'ar' ? 'إدارة المستخدمين وأدوارهم في النظام' : 'Manage users and their roles in the system'}
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8">
+          {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+        </div>
+      ) : allUsers.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p>{language === 'ar' ? 'لا يوجد مستخدمون' : 'No users found'}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {allUsers.map((user) => (
+            <Card key={user.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{user.full_name || 'N/A'}</h3>
+                    <p className="text-sm text-muted-foreground">{user.email || 'N/A'}</p>
+                    {user.department && (
+                      <p className="text-sm text-muted-foreground">{user.department}</p>
+                    )}
+                    <div className="mt-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        user.role === 'management' ? 'bg-purple-100 text-purple-800' :
+                        user.role === 'evaluator' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        <UserCheck className="h-3 w-3 mr-1" />
+                        {user.role}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderSettingsView = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">
+          {language === 'ar' ? 'الإعدادات' : 'Settings'}
+        </h1>
+        <p className="text-muted-foreground">
+          {language === 'ar' ? 'إعدادات النظام والتحكم العام' : 'System settings and general controls'}
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            {language === 'ar' ? 'إعدادات النظام' : 'System Settings'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h3 className="font-medium">
+                  {language === 'ar' ? 'إدارة المستخدمين' : 'User Management'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'إدارة أدوار وصلاحيات المستخدمين' : 'Manage user roles and permissions'}
+                </p>
+              </div>
+              <Button variant="outline">
+                {language === 'ar' ? 'إدارة' : 'Manage'}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h3 className="font-medium">
+                  {language === 'ar' ? 'إعدادات التقييم' : 'Evaluation Settings'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'تخصيص معايير وعملية التقييم' : 'Customize evaluation criteria and process'}
+                </p>
+              </div>
+              <Button variant="outline">
+                {language === 'ar' ? 'تكوين' : 'Configure'}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h3 className="font-medium">
+                  {language === 'ar' ? 'إعدادات النظام' : 'System Configuration'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'الإعدادات العامة للنظام' : 'General system settings'}
+                </p>
+              </div>
+              <Button variant="outline">
+                {language === 'ar' ? 'تحرير' : 'Edit'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  return renderContent();
 };
