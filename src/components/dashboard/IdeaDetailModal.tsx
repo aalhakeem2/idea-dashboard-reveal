@@ -48,12 +48,14 @@ export const IdeaDetailModal = ({
   showEvaluateButton = false
 }: IdeaDetailModalProps) => {
   const [submitterProfile, setSubmitterProfile] = useState<Profile | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const { t, language, isRTL } = useLanguage();
 
   useEffect(() => {
     if (idea && isOpen) {
       fetchSubmitterProfile();
+      fetchCurrentUserProfile();
     }
   }, [idea, isOpen]);
 
@@ -78,6 +80,28 @@ export const IdeaDetailModal = ({
       console.error("Error fetching submitter profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCurrentUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching current user profile:", error);
+        return;
+      }
+
+      setCurrentUserProfile(profile);
+    } catch (error) {
+      console.error("Error fetching current user profile:", error);
     }
   };
 
@@ -201,37 +225,39 @@ export const IdeaDetailModal = ({
 
             {/* Idea Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Submitter Information */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    {t('dashboard', 'submitter_info')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {loading ? (
-                    <div className="text-muted-foreground">Loading...</div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{t('dashboard', 'name')}:</span>
-                        <span>{submitterProfile?.full_name || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{t('dashboard', 'email')}:</span>
-                        <span>{submitterProfile?.email || 'N/A'}</span>
-                      </div>
-                      {submitterProfile?.department && (
+              {/* Submitter Information - Hidden for evaluators */}
+              {currentUserProfile?.role !== 'evaluator' && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      {t('dashboard', 'submitter_info')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {loading ? (
+                      <div className="text-muted-foreground">Loading...</div>
+                    ) : (
+                      <>
                         <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4" />
-                          <span>{submitterProfile.department}</span>
+                          <span className="font-medium">{t('dashboard', 'name')}:</span>
+                          <span>{submitterProfile?.full_name || 'N/A'}</span>
                         </div>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{t('dashboard', 'email')}:</span>
+                          <span>{submitterProfile?.email || 'N/A'}</span>
+                        </div>
+                        {submitterProfile?.department && (
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4" />
+                            <span>{submitterProfile.department}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Financial Information */}
               {(idea.implementation_cost || idea.expected_roi) && (
