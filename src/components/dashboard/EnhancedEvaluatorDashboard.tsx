@@ -389,7 +389,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
             <CardContent>
               <div className="text-2xl font-bold">
                 {evaluations.length > 0 
-                  ? (evaluations.reduce((sum, eval) => sum + (eval.overall_score || 0), 0) / evaluations.length).toFixed(1)
+                  ? (evaluations.reduce((sum, evaluation) => sum + (evaluation.overall_score || 0), 0) / evaluations.length).toFixed(1)
                   : '0'
                 }
               </div>
