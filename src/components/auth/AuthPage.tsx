@@ -42,6 +42,13 @@ export const AuthPage = () => {
       userRole: "management" as const,
       id: "33333333-3333-3333-3333-333333333333"
     },
+    { 
+      email: "admin@you.com", 
+      name: "Admin", 
+      role: "Admin",
+      userRole: "management" as const,
+      id: "44444444-4444-4444-4444-444444444444"
+    },
   ];
 
   const handleSignUp = async (e: React.FormEvent) => {
