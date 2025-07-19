@@ -8,7 +8,8 @@ import {
   Settings,
   LogOut,
   Plus,
-  Zap
+  Zap,
+  UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,7 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
       case "management":
         return [
           ...baseItems,
+          { id: "evaluator-management", label: t('sidebar', 'evaluator_management'), icon: UserCheck },
           { id: "analytics", label: t('sidebar', 'analytics'), icon: BarChart3 },
           { id: "users", label: t('sidebar', 'users'), icon: Users },
           { id: "settings", label: t('sidebar', 'settings'), icon: Settings },

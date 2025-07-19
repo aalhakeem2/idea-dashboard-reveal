@@ -8,6 +8,8 @@ import { TrendingUp, Users, Lightbulb, CheckCircle, Clock, Target, Activity, Set
 import { IdeaCard } from "./IdeaCard";
 import { IdeaTimeline } from "./IdeaTimeline";
 import { IdeaActionLog } from "./IdeaActionLog";
+import { EvaluatorAssignmentDashboard } from "./EvaluatorAssignmentDashboard";
+import { EvaluatorPoolManagement } from "./EvaluatorPoolManagement";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
@@ -226,6 +228,10 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
         return renderDashboardOverview();
       case "ideas":
         return renderAllIdeasView();
+      case "evaluator-management":
+        return <EvaluatorAssignmentDashboard profile={profile} />;
+      case "evaluator-pool":
+        return <EvaluatorPoolManagement profile={profile} />;
       case "analytics":
         return renderAnalyticsView();
       case "users":
