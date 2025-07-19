@@ -30,7 +30,7 @@ export const AuthPage = () => {
     },
     { 
       email: "evaluator@you.com", 
-      name: "Bob Smith", 
+      name: "Abdurhman Alhakeem", 
       role: "Evaluator",
       userRole: "evaluator" as const,
       id: "f506d6d7-bae4-4268-88c6-88cfb194dd7f"
