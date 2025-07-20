@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, User, DollarSign, Star, FileText, TrendingUp, Clock, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTranslations } from "@/hooks/useTranslations";
 
 type Idea = Tables<"ideas">;
 
@@ -18,6 +19,7 @@ interface IdeaCardProps {
 
 export const IdeaCard = ({ idea, detailed = false, showTimeline = false, onViewActivity }: IdeaCardProps) => {
   const { language } = useLanguage();
+  const { t } = useTranslations("idea_status_extended");
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -53,11 +55,13 @@ export const IdeaCard = ({ idea, detailed = false, showTimeline = false, onViewA
       under_review: { en: "🔍 Under Review", ar: "🔍 قيد المراجعة" },
       screened: { en: "✅ Screened", ar: "✅ تم الفحص" },
       under_evaluation: { en: "📊 Under Evaluation", ar: "📊 قيد التقييم" },
-      evaluated: { en: "🧩 Evaluated", ar: "🧩 تم التقييم" },
+      evaluated: { en: "🧩 Evaluated", ar: `🧩 ${t('evaluated')}` },
       approved: { en: "🟢 Approved", ar: "🟢 موافق عليه" },
       rejected: { en: "🔴 Rejected", ar: "🔴 مرفوض" },
       deferred: { en: "🟡 Deferred", ar: "🟡 مؤجل" },
       implemented: { en: "🏁 Implemented", ar: "🏁 تم التنفيذ" },
+      needs_revision: { en: `🔄 ${t('needs_revision')}`, ar: `🔄 ${t('needs_revision')}` },
+      conditional_approval: { en: `⚠️ ${t('conditional_approval')}`, ar: `⚠️ ${t('conditional_approval')}` },
     };
     return statusLabels[status as keyof typeof statusLabels]?.[language] || status;
   };
