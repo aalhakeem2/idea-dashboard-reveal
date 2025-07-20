@@ -3,7 +3,11 @@ import React from "react";
 import { EvaluatorPoolManagement } from "../EvaluatorPoolManagement";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export const EvaluatorManagementView = () => {
+interface EvaluatorManagementViewProps {
+  profile: any;
+}
+
+export const EvaluatorManagementView = ({ profile }: EvaluatorManagementViewProps) => {
   const { language } = useLanguage();
 
   return (
@@ -16,7 +20,7 @@ export const EvaluatorManagementView = () => {
           {language === 'ar' ? 'إدارة وتعيين المقيمين' : 'Manage and assign evaluators'}
         </p>
       </div>
-      <EvaluatorPoolManagement />
+      <EvaluatorPoolManagement profile={profile} />
     </div>
   );
 };

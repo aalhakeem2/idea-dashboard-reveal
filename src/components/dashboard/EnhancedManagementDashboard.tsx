@@ -33,6 +33,7 @@ interface EnhancedManagementDashboardProps {
   ideas: any[];
   onIdeaUpdated: () => void;
   activeView?: string;
+  profile: any;
 }
 
 interface DashboardStats {
@@ -47,7 +48,8 @@ interface DashboardStats {
 export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardProps> = ({
   ideas,
   onIdeaUpdated,
-  activeView = "dashboard"
+  activeView = "dashboard",
+  profile
 }) => {
   const { t } = useTranslations("evaluation_dashboard");
   const { language } = useLanguage();
@@ -149,7 +151,7 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
       case "ideas":
         return renderAllIdeasView();
       case "evaluator-management":
-        return <EvaluatorManagementView />;
+        return <EvaluatorManagementView profile={profile} />;
       case "evaluator-pool":
         return <EvaluatorPoolView />;
       case "users":

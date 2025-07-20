@@ -138,7 +138,7 @@ export const Dashboard = ({ user }: DashboardProps) => {
         return <EnhancedEvaluatorDashboard profile={profile} activeView={activeView} />;
       case "management":
         // Pass activeView to Enhanced Management Dashboard
-        return <EnhancedManagementDashboard ideas={ideas} onIdeaUpdated={fetchIdeas} activeView={activeView} />;
+        return <EnhancedManagementDashboard ideas={ideas} onIdeaUpdated={fetchIdeas} activeView={activeView} profile={profile} />;
       default:
         return <EnhancedSubmitterDashboard profile={profile} activeView={activeView} />;
     }
