@@ -11,6 +11,7 @@ import { IdeaActionLog } from "./IdeaActionLog";
 import { EvaluatorAssignmentDashboard } from "./EvaluatorAssignmentDashboard";
 import { EvaluatorPoolManagement } from "./EvaluatorPoolManagement";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { UserManagement } from "./UserManagement";
 
 type Profile = Tables<"profiles">;
 type Idea = Tables<"ideas">;
@@ -632,6 +633,10 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
   );
 
   const renderUsersView = () => (
+    <UserManagement />
+  );
+
+  const renderUsersViewOld = () => (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">

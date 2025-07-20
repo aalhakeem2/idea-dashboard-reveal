@@ -426,45 +426,88 @@ export type Database = {
       }
       profiles: {
         Row: {
+          blocked_at: string | null
+          blocked_by: string | null
           created_at: string | null
+          created_by: string | null
           department: string | null
           email: string | null
           email_confirmed: boolean | null
           full_name: string | null
           id: string
+          is_active: boolean | null
+          last_login: string | null
+          password_reset_required: boolean | null
           role: Database["public"]["Enums"]["user_role"]
           specialization:
             | Database["public"]["Enums"]["evaluation_type"][]
             | null
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
           created_at?: string | null
+          created_by?: string | null
           department?: string | null
           email?: string | null
           email_confirmed?: boolean | null
           full_name?: string | null
           id: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_reset_required?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           specialization?:
             | Database["public"]["Enums"]["evaluation_type"][]
             | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
           created_at?: string | null
+          created_by?: string | null
           department?: string | null
           email?: string | null
           email_confirmed?: boolean | null
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_reset_required?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           specialization?:
             | Database["public"]["Enums"]["evaluation_type"][]
             | null
           updated_at?: string | null
+          updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       translations: {
         Row: {
@@ -496,11 +539,69 @@ export type Database = {
         }
         Relationships: []
       }
+      user_management_logs: {
+        Row: {
+          action_details: Json | null
+          action_type: string
+          created_at: string | null
+          id: string
+          performed_by: string
+          target_user_id: string
+        }
+        Insert: {
+          action_details?: Json | null
+          action_type: string
+          created_at?: string | null
+          id?: string
+          performed_by: string
+          target_user_id: string
+        }
+        Update: {
+          action_details?: Json | null
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          performed_by?: string
+          target_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_management_logs_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_management_logs_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_require_password_reset: {
+        Args: { p_user_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      admin_toggle_user_status: {
+        Args: { p_user_id: string; p_is_active: boolean; p_reason?: string }
+        Returns: undefined
+      }
+      admin_update_user_role: {
+        Args: {
+          p_user_id: string
+          p_new_role: Database["public"]["Enums"]["user_role"]
+          p_specialization?: Database["public"]["Enums"]["evaluation_type"][]
+        }
+        Returns: undefined
+      }
       calculate_average_evaluation_score: {
         Args: { idea_uuid: string }
         Returns: number
@@ -537,6 +638,14 @@ export type Database = {
           p_idea_id: string
           p_action_type: string
           p_action_detail?: string
+        }
+        Returns: undefined
+      }
+      log_user_management_action: {
+        Args: {
+          p_target_user_id: string
+          p_action_type: string
+          p_action_details?: Json
         }
         Returns: undefined
       }
