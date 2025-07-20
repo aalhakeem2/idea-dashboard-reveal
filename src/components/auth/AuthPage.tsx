@@ -19,49 +19,55 @@ export const AuthPage = () => {
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
 
-  // Test user accounts with roles - matched to actual database users
+  // Test user accounts with standardized password
   const testUsers = [
     { 
       email: "hani.gazim@gmail.com", 
       name: "Hani Gazim", 
       role: "Submitter",
       userRole: "submitter" as const,
-      id: "11111111-1111-1111-1111-111111111111"
+      id: "11111111-1111-1111-1111-111111111111",
+      password: "Abdu123+++"
     },
     { 
       email: "evaluator@you.com", 
       name: "Abdurhman Alhakeem", 
       role: "Evaluator 1",
       userRole: "evaluator" as const,
-      id: "f506d6d7-bae4-4268-88c6-88cfb194dd7f"
+      id: "f506d6d7-bae4-4268-88c6-88cfb194dd7f",
+      password: "Abdu123+++"
     },
     { 
       email: "alhakeem006644@gmail.com", 
       name: "Ahmed Alhakeem", 
       role: "Evaluator 2",
       userRole: "evaluator" as const,
-      id: "91214bfa-111d-4fc4-8cec-af7bbe97374d"
+      id: "91214bfa-111d-4fc4-8cec-af7bbe97374d",
+      password: "Abdu123+++"
     },
     { 
       email: "test@you.com", 
       name: "Mohammed Alhakeem", 
       role: "Evaluator 3",
       userRole: "evaluator" as const,
-      id: "e4f73997-7a96-4bc2-95a6-37be29539adc"
+      id: "e4f73997-7a96-4bc2-95a6-37be29539adc",
+      password: "Abdu123+++"
     },
     { 
       email: "osama.murshed@gmail.com", 
       name: "Osama Murshed", 
       role: "Management",
       userRole: "management" as const,
-      id: "33333333-3333-3333-3333-333333333333"
+      id: "33333333-3333-3333-3333-333333333333",
+      password: "Abdu123+++"
     },
     { 
       email: "admin@you.com", 
       name: "Admin", 
       role: "Admin",
       userRole: "management" as const,
-      id: "44444444-4444-4444-4444-444444444444"
+      id: "44444444-4444-4444-4444-444444444444",
+      password: "Abdu123+++"
     },
   ];
 
@@ -161,19 +167,50 @@ export const AuthPage = () => {
     try {
       console.log(`Attempting login for ${testUser.name} (${testUser.email})`);
       
-      // Try to sign in first
-      let { error: signInError } = await supabase.auth.signInWithPassword({
-        email: testUser.email,
-        password: "Abdu123+++",
-      });
+      // Check if user exists in profiles table first
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .eq('email', testUser.email)
+        .single();
 
-      // If sign in fails, create the user
-      if (signInError) {
-        console.log("User doesn't exist, creating...");
+      if (profileError && profileError.code !== 'PGRST116') {
+        // PGRST116 is "not found" error, which is expected for new users
+        throw new Error(`Profile check failed: ${profileError.message}`);
+      }
+
+      if (existingProfile) {
+        // User exists, attempt sign in only
+        console.log(`User ${testUser.email} exists, attempting sign in...`);
+        
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: testUser.email,
+          password: testUser.password,
+        });
+
+        if (signInError) {
+          console.error(`Sign in failed for ${testUser.email}:`, signInError.message);
+          
+          // If password is wrong, we might need to reset it or use a different approach
+          if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error(`Login failed: Please check the password for ${testUser.name}. You may need to reset the password or contact support.`);
+          }
+          
+          throw new Error(`Sign in failed: ${signInError.message}`);
+        }
+        
+        console.log(`Sign in successful for ${testUser.name}`);
+        toast({
+          title: "Login Successful",
+          description: `Logged in as ${testUser.name} (${testUser.role})`,
+        });
+      } else {
+        // User doesn't exist, create new user
+        console.log(`User ${testUser.email} doesn't exist, creating new user...`);
         
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: testUser.email,
-          password: "Abdu123+++",
+          password: testUser.password,
           options: {
             data: {
               full_name: testUser.name,
@@ -184,33 +221,34 @@ export const AuthPage = () => {
         });
 
         if (signUpError) {
+          console.error(`Sign up failed for ${testUser.email}:`, signUpError.message);
           throw new Error(`Failed to create user: ${signUpError.message}`);
         }
 
-        console.log("User created successfully, setting up profile...");
+        console.log(`User created successfully for ${testUser.name}`);
 
-        // The profile should be created automatically by the trigger
-        // Let's wait a moment and then sign in
+        // Wait a moment for profile creation trigger
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Now sign in
+        // Sign in after creation
         const { error: finalSignInError } = await supabase.auth.signInWithPassword({
           email: testUser.email,
-          password: "Abdu123+++",
+          password: testUser.password,
         });
 
         if (finalSignInError) {
-          throw new Error(`Final login failed: ${finalSignInError.message}`);
+          console.error(`Final sign in failed for ${testUser.email}:`, finalSignInError.message);
+          throw new Error(`Login after creation failed: ${finalSignInError.message}`);
         }
+
+        console.log(`Complete setup successful for ${testUser.name}`);
+        toast({
+          title: "Account Created & Login Successful",
+          description: `Created account and logged in as ${testUser.name} (${testUser.role})`,
+        });
       }
-      
-      console.log("Login successful for", testUser.name);
-      toast({
-        title: "Login Successful",
-        description: `Logged in as ${testUser.name} (${testUser.role})`,
-      });
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("Test login error:", error);
       toast({
         title: "Login Error",
         description: error.message || "Failed to login. Please try again.",
