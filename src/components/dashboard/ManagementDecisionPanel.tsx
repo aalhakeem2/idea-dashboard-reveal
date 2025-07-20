@@ -28,8 +28,8 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
   const { language } = useLanguage();
   const { toast } = useToast();
   
-  const { values: priorities } = useListOfValues("priority_levels");
-  const { values: departments } = useListOfValues("department_assignments");
+  const { values: priorities } = useListOfValues("priority");
+  const { values: departments } = useListOfValues("department_assignment");
   
   const [selectedDecision, setSelectedDecision] = useState<string>("");
   const [priority, setPriority] = useState<string>("");
