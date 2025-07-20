@@ -52,6 +52,11 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
             label: language === "ar" ? "أفكاري" : "My Ideas",
             icon: FileText,
           },
+          {
+            id: "ideas",
+            label: language === "ar" ? "جميع الأفكار" : "All Ideas",
+            icon: Lightbulb,
+          },
         ];
 
       case "evaluator":
@@ -66,6 +71,16 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
             id: "assigned-ideas",
             label: language === "ar" ? "الأفكار المُكلفة" : "Assigned Ideas",
             icon: Target,
+          },
+          {
+            id: "ideas",
+            label: language === "ar" ? "جميع الأفكار" : "All Ideas",
+            icon: Lightbulb,
+          },
+          {
+            id: "analytics",
+            label: language === "ar" ? "التحليلات" : "Analytics",
+            icon: BarChart3,
           },
         ];
 

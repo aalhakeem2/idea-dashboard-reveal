@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,18 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
   const [statusLogs, setStatusLogs] = useState([]);
   const [actionLogs, setActionLogs] = useState([]);
   const { t, language } = useLanguage();
+
+  console.log("EnhancedSubmitterDashboard: activeView:", activeView);
+
+  // Handle submit-idea navigation
+  useEffect(() => {
+    if (activeView === "submit-idea") {
+      console.log("EnhancedSubmitterDashboard: Activating form for submit-idea");
+      setShowForm(true);
+    } else {
+      setShowForm(false);
+    }
+  }, [activeView]);
 
   const fetchIdeas = async () => {
     try {
@@ -163,7 +176,8 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
     return ideas.filter(idea => !idea.is_draft);
   };
 
-  if (showForm) {
+  // Show form when activeView is submit-idea or showForm is true
+  if (showForm || activeView === "submit-idea") {
     return (
       <IdeaSubmissionForm 
         profile={profile} 
@@ -175,14 +189,13 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
 
   // Render based on active view
   const renderContent = () => {
+    console.log("EnhancedSubmitterDashboard: Rendering content for activeView:", activeView);
+    
     switch (activeView) {
       case "dashboard":
         return renderDashboardView();
       case "ideas":
         return renderAllIdeasView();
-      case "submit":
-        setShowForm(true);
-        return null;
       case "my-ideas":
         return renderMyIdeasView();
       default:

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -28,7 +29,9 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
   const [showEvaluationForm, setShowEvaluationForm] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailIdea, setDetailIdea] = useState<Idea | null>(null);
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+
+  console.log("EnhancedEvaluatorDashboard: activeView:", activeView);
 
   const fetchData = async () => {
     try {
@@ -144,13 +147,17 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
 
   // Render based on active view
   const renderContent = () => {
+    console.log("EnhancedEvaluatorDashboard: Rendering content for activeView:", activeView);
+    
     switch (activeView) {
       case "dashboard":
         return renderDashboardView();
       case "ideas":
         return renderAllIdeasView();
-      case "pending-evaluations":
+      case "evaluations":
         return renderPendingEvaluationsView();
+      case "assigned-ideas":
+        return renderPendingEvaluationsView(); // Same as evaluations for now
       case "analytics":
         return renderAnalyticsView();
       default:
@@ -164,10 +171,10 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
       <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
         <div>
           <h1 className={`text-3xl font-bold ${isRTL ? 'text-right' : 'text-left'}`}>
-            {t('dashboard', 'evaluator_dashboard')}
+            {language === 'ar' ? 'لوحة تحكم المقيم' : 'Evaluator Dashboard'}
           </h1>
           <p className={`text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-            {t('dashboard', 'review_evaluate_ideas')}
+            {language === 'ar' ? 'مراجعة وتقييم الأفكار' : 'Review and evaluate ideas'}
           </p>
         </div>
       </div>
@@ -180,7 +187,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
               <ClipboardCheck className="h-5 w-5 text-blue-600" />
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">{t('dashboard', 'ideas_to_review')}</p>
+                <p className="text-xs text-muted-foreground">{language === 'ar' ? 'أفكار للمراجعة' : 'Ideas to review'}</p>
               </div>
             </div>
           </CardContent>
@@ -192,7 +199,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
               <Clock className="h-5 w-5 text-orange-600" />
               <div>
                 <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-xs text-muted-foreground">{t('dashboard', 'pending_evaluation')}</p>
+                <p className="text-xs text-muted-foreground">{language === 'ar' ? 'في انتظار التقييم' : 'Pending evaluation'}</p>
               </div>
             </div>
           </CardContent>
@@ -204,7 +211,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
               <CheckCircle className="h-5 w-5 text-green-600" />
               <div>
                 <p className="text-2xl font-bold">{stats.evaluated}</p>
-                <p className="text-xs text-muted-foreground">{t('dashboard', 'evaluated_today')}</p>
+                <p className="text-xs text-muted-foreground">{language === 'ar' ? 'تم تقييمها اليوم' : 'Evaluated today'}</p>
               </div>
             </div>
           </CardContent>
@@ -216,7 +223,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
               <Star className="h-5 w-5 text-yellow-600" />
               <div>
                 <p className="text-2xl font-bold">{stats.totalEvaluations}</p>
-                <p className="text-xs text-muted-foreground">{t('dashboard', 'total_evaluations')}</p>
+                <p className="text-xs text-muted-foreground">{language === 'ar' ? 'إجمالي التقييمات' : 'Total evaluations'}</p>
               </div>
             </div>
           </CardContent>
@@ -226,14 +233,14 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
       {/* Recent Ideas for Evaluation */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('dashboard', 'recent_ideas_for_evaluation')}</CardTitle>
+          <CardTitle>{language === 'ar' ? 'أفكار حديثة للتقييم' : 'Recent Ideas for Evaluation'}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">{t('common', 'loading')}</div>
+            <div className="text-center py-8">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>
           ) : ideas.slice(0, 3).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>{t('dashboard', 'no_ideas_assigned')}</p>
+              <p>{language === 'ar' ? 'لا توجد أفكار مُعينة' : 'No ideas assigned'}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -248,11 +255,11 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
                     <div className="flex gap-2">
                       {!isEvaluated && (
                         <Button size="sm" onClick={() => handleEvaluateIdea(idea)}>
-                          {t('dashboard', 'evaluate')}
+                          {language === 'ar' ? 'تقييم' : 'Evaluate'}
                         </Button>
                       )}
                       <Button variant="outline" size="sm" onClick={() => handleViewDetails(idea)}>
-                        {t('dashboard', 'view_details')}
+                        {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
                       </Button>
                     </div>
                   </div>
@@ -268,16 +275,16 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
   const renderAllIdeasView = () => (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t('dashboard', 'all_ideas')}</h1>
-        <p className="text-muted-foreground">{t('dashboard', 'browse_all_submitted_ideas')}</p>
+        <h1 className="text-3xl font-bold">{language === 'ar' ? 'جميع الأفكار' : 'All Ideas'}</h1>
+        <p className="text-muted-foreground">{language === 'ar' ? 'تصفح جميع الأفكار المُرسلة' : 'Browse all submitted ideas'}</p>
       </div>
 
       {loading ? (
-        <div className="text-center py-8">{t('common', 'loading')}</div>
+        <div className="text-center py-8">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>
       ) : ideas.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
-            <p>{t('dashboard', 'no_ideas_available')}</p>
+            <p>{language === 'ar' ? 'لا توجد أفكار متاحة' : 'No ideas available'}</p>
           </CardContent>
         </Card>
       ) : (
@@ -302,18 +309,18 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">{t('dashboard', 'pending_evaluations')}</h1>
-          <p className="text-muted-foreground">{t('dashboard', 'ideas_awaiting_evaluation')}</p>
+          <h1 className="text-3xl font-bold">{language === 'ar' ? 'التقييمات المعلقة' : 'Pending Evaluations'}</h1>
+          <p className="text-muted-foreground">{language === 'ar' ? 'الأفكار في انتظار التقييم' : 'Ideas awaiting evaluation'}</p>
         </div>
 
         {loading ? (
-          <div className="text-center py-8">{t('common', 'loading')}</div>
+          <div className="text-center py-8">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>
         ) : pendingIdeas.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center">
               <ClipboardCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium mb-2">{t('dashboard', 'no_pending_evaluations')}</p>
-              <p className="text-muted-foreground">{t('dashboard', 'all_caught_up')}</p>
+              <p className="text-lg font-medium mb-2">{language === 'ar' ? 'لا توجد تقييمات معلقة' : 'No pending evaluations'}</p>
+              <p className="text-muted-foreground">{language === 'ar' ? 'كل شيء مكتمل!' : 'All caught up!'}</p>
             </CardContent>
           </Card>
         ) : (
@@ -340,7 +347,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
                         </Badge>
                         {idea.submitted_at && (
                           <span>
-                            {t('dashboard', 'submitted_at')}: {new Date(idea.submitted_at).toLocaleDateString()}
+                            {language === 'ar' ? 'تم الإرسال في:' : 'Submitted at:'} {new Date(idea.submitted_at).toLocaleDateString()}
                           </span>
                         )}
                       </div>
@@ -348,11 +355,11 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
                     <div className="flex gap-2">
                       <Button onClick={() => handleEvaluateIdea(idea)} className="gap-2">
                         <ClipboardCheck className="h-4 w-4" />
-                        {t('dashboard', 'evaluate')}
+                        {language === 'ar' ? 'تقييم' : 'Evaluate'}
                       </Button>
                       <Button variant="outline" size="sm" className="gap-2" onClick={() => handleViewDetails(idea)}>
                         <Eye className="h-4 w-4" />
-                        {t('dashboard', 'view_details')}
+                        {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
                       </Button>
                     </div>
                   </div>
@@ -371,14 +378,14 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">{t('dashboard', 'analytics')}</h1>
-          <p className="text-muted-foreground">{t('dashboard', 'evaluation_insights')}</p>
+          <h1 className="text-3xl font-bold">{language === 'ar' ? 'التحليلات' : 'Analytics'}</h1>
+          <p className="text-muted-foreground">{language === 'ar' ? 'رؤى التقييم' : 'Evaluation insights'}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard', 'total_evaluations')}</CardTitle>
+              <CardTitle className="text-sm font-medium">{language === 'ar' ? 'إجمالي التقييمات' : 'Total Evaluations'}</CardTitle>
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -388,7 +395,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard', 'avg_score')}</CardTitle>
+              <CardTitle className="text-sm font-medium">{language === 'ar' ? 'متوسط النقاط' : 'Avg Score'}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -403,7 +410,7 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard', 'completion_rate')}</CardTitle>
+              <CardTitle className="text-sm font-medium">{language === 'ar' ? 'معدل الإكمال' : 'Completion Rate'}</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -416,8 +423,8 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('dashboard', 'ideas_by_status')}</CardTitle>
-            <CardDescription>{t('dashboard', 'distribution_of_idea_statuses')}</CardDescription>
+            <CardTitle>{language === 'ar' ? 'الأفكار حسب الحالة' : 'Ideas by Status'}</CardTitle>
+            <CardDescription>{language === 'ar' ? 'توزيع حالات الأفكار' : 'Distribution of idea statuses'}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
