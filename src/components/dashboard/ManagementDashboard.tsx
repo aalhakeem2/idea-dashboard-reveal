@@ -38,7 +38,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
   const [statusLogs, setStatusLogs] = useState([]);
   const [actionLogs, setActionLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
@@ -141,7 +141,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
       }, {});
 
       const chartData = Object.entries(statusCount || {}).map(([status, count]) => ({
-        name: status.replace("_", " "),
+        name: t('idea_status', status) || status.replace("_", " "),
         count: count,
       }));
 
@@ -262,7 +262,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Ideas</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('management_dashboard', 'total_ideas')}</CardTitle>
             <Lightbulb className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -272,7 +272,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Ideas</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('management_dashboard', 'active_ideas')}</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -282,7 +282,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Implemented</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('management_dashboard', 'implemented')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -292,7 +292,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('management_dashboard', 'success_rate')}</CardTitle>
             <Target className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -302,7 +302,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('management_dashboard', 'total_users')}</CardTitle>
             <Users className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
@@ -312,7 +312,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Time</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('management_dashboard', 'avg_time')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-indigo-600" />
           </CardHeader>
           <CardContent>
@@ -324,8 +324,12 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Ideas by Status</CardTitle>
-            <CardDescription>Current distribution of idea statuses</CardDescription>
+            <CardTitle dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {t('management_dashboard', 'ideas_by_status')}
+            </CardTitle>
+            <CardDescription dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {t('management_dashboard', 'status_distribution')}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -363,7 +367,7 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
                   labelLine={false}
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, name, percent }) => {
                     const RADIAN = Math.PI / 180;
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.7;
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                     
@@ -374,10 +378,12 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
                         fill="white" 
                         textAnchor={x > cx ? 'start' : 'end'} 
                         dominantBaseline="central"
-                        fontSize={12}
+                        fontSize={10}
                         fontWeight="bold"
+                        direction={language === 'ar' ? 'rtl' : 'ltr'}
                       >
-                        {`${(percent * 100).toFixed(0)}%`}
+                        <tspan x={x} dy="-0.3em">{name}</tspan>
+                        <tspan x={x} dy="1.2em">{`${(percent * 100).toFixed(0)}%`}</tspan>
                       </text>
                     ) : null;
                   }}
@@ -401,8 +407,12 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
       <Card>
         <CardHeader>
-          <CardTitle>Key Performance Indicators</CardTitle>
-          <CardDescription>Monthly performance metrics and trends</CardDescription>
+          <CardTitle dir={language === 'ar' ? 'rtl' : 'ltr'}>
+            {t('management_dashboard', 'key_performance_indicators')}
+          </CardTitle>
+          <CardDescription dir={language === 'ar' ? 'rtl' : 'ltr'}>
+            {t('management_dashboard', 'monthly_performance')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -410,19 +420,25 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
               <div className="text-2xl font-bold text-blue-600">
                 {Math.round((stats.implementedIdeas / Math.max(stats.totalIdeas, 1)) * 100)}%
               </div>
-              <div className="text-sm text-gray-600">Implementation Rate</div>
+              <div className="text-sm text-gray-600" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                {t('management_dashboard', 'implementation_rate')}
+              </div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
                 {Math.round(stats.totalIdeas / Math.max(stats.totalUsers, 1) * 10) / 10}
               </div>
-              <div className="text-sm text-gray-600">Ideas per User</div>
+              <div className="text-sm text-gray-600" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                {t('management_dashboard', 'ideas_per_user')}
+              </div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
                 {Math.round((stats.activeIdeas / Math.max(stats.totalIdeas, 1)) * 100)}%
               </div>
-              <div className="text-sm text-gray-600">Active Idea Rate</div>
+              <div className="text-sm text-gray-600" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                {t('management_dashboard', 'active_idea_rate')}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -430,13 +446,13 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" />
-            {language === 'ar' ? 'الأفكار الحديثة' : 'Recent Ideas'}
-          </CardTitle>
-          <CardDescription>
-            {language === 'ar' ? 'أحدث الأفكار المُرسلة في النظام' : 'Latest ideas submitted to the system'}
-          </CardDescription>
+            <CardTitle className="flex items-center gap-2" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              <Lightbulb className="h-5 w-5" />
+              {t('management_dashboard', 'recent_ideas') || (language === 'ar' ? 'الأفكار الحديثة' : 'Recent Ideas')}
+            </CardTitle>
+            <CardDescription dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {t('management_dashboard', 'latest_ideas') || (language === 'ar' ? 'أحدث الأفكار المُرسلة في النظام' : 'Latest ideas submitted to the system')}
+            </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -457,16 +473,16 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2" dir={language === 'ar' ? 'rtl' : 'ltr'}>
                 <Activity className="h-5 w-5" />
-                {language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:'} {selectedIdea.title}
+                {(language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:')} {selectedIdea.title}
               </CardTitle>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setSelectedIdea(null)}
               >
-                {language === 'ar' ? 'إغلاق' : 'Close'}
+                {t('common', 'close')}
               </Button>
             </div>
           </CardHeader>
@@ -484,22 +500,24 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
   const renderAllIdeasView = () => (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">
-          {language === 'ar' ? 'جميع الأفكار' : 'All Ideas'}
+        <h1 className="text-3xl font-bold" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {t('management_dashboard', 'all_ideas')}
         </h1>
-        <p className="text-muted-foreground">
-          {language === 'ar' ? 'إدارة ومراجعة جميع الأفكار في النظام' : 'Manage and review all ideas in the system'}
+        <p className="text-muted-foreground" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {t('management_dashboard', 'manage_review_ideas')}
         </p>
       </div>
 
       {loading ? (
         <div className="text-center py-8">
-          {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+          {t('common', 'loading')}
         </div>
       ) : allIdeas.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
-            <p>{language === 'ar' ? 'لا توجد أفكار متاحة' : 'No ideas available'}</p>
+            <p dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {t('common', 'no_data') || (language === 'ar' ? 'لا توجد أفكار متاحة' : 'No ideas available')}
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -521,19 +539,23 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
   const renderAnalyticsView = () => (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">
-          {language === 'ar' ? 'التحليلات' : 'Analytics'}
+        <h1 className="text-3xl font-bold" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {t('management_dashboard', 'analytics')}
         </h1>
-        <p className="text-muted-foreground">
-          {language === 'ar' ? 'تحليل شامل لأداء النظام والأفكار' : 'Comprehensive system and idea performance analysis'}
+        <p className="text-muted-foreground" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {t('management_dashboard', 'detailed_analytics') || (language === 'ar' ? 'تحليل شامل لأداء النظام والأفكار' : 'Comprehensive system and idea performance analysis')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Ideas by Status</CardTitle>
-            <CardDescription>Current distribution of idea statuses</CardDescription>
+            <CardTitle dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {t('management_dashboard', 'ideas_by_status')}
+            </CardTitle>
+            <CardDescription dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {t('management_dashboard', 'status_distribution')}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
