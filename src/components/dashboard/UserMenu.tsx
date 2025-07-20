@@ -27,8 +27,20 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
 
   const handleLogout = async () => {
     try {
+      // First clear local session state
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+      
+      // Attempt to sign out from server
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      // Even if server logout fails, we continue with local cleanup
+      if (error && error.message !== 'Session not found') {
+        console.warn('Server logout warning:', error);
+      }
+      
+      // Force page reload to ensure complete cleanup
+      window.location.href = '/';
       
       toast({
         title: language === 'ar' ? 'تم تسجيل الخروج' : 'Logged out',
@@ -36,10 +48,15 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
       });
     } catch (error) {
       console.error('Logout error:', error);
+      
+      // Force logout even if there's an error
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/';
+      
       toast({
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'حدث خطأ أثناء تسجيل الخروج' : 'An error occurred while logging out',
-        variant: "destructive",
+        title: language === 'ar' ? 'تم تسجيل الخروج' : 'Logged out',
+        description: language === 'ar' ? 'تم تسجيل خروجك بنجاح' : 'You have been logged out successfully',
       });
     }
   };
@@ -82,47 +99,51 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className={`h-10 w-10 ${getRoleColor(profile.role || 'submitter')}`}>
-            <AvatarFallback className="text-white font-semibold">
+        <Button 
+          variant="ghost" 
+          className="relative h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 transition-all duration-200 shadow-lg hover:shadow-xl"
+        >
+          <Avatar className={`h-8 w-8 ${getRoleColor(profile.role || 'submitter')} ring-2 ring-white/30`}>
+            <AvatarFallback className="text-white font-bold text-sm">
               {getInitials(profile.full_name || 'User')}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className={`w-56 ${isRTL ? 'text-right' : 'text-left'}`} 
+        className={`w-56 ${isRTL ? 'text-right' : 'text-left'} bg-white shadow-xl border border-gray-200 rounded-lg`} 
         align={isRTL ? "start" : "end"}
+        sideOffset={8}
       >
-        <div className="flex items-center justify-start space-x-2 p-2">
-          <Avatar className={`h-8 w-8 ${getRoleColor(profile.role || 'submitter')}`}>
-            <AvatarFallback className="text-white text-xs">
+        <div className="flex items-center justify-start space-x-2 p-3 bg-gray-50 rounded-t-lg">
+          <Avatar className={`h-10 w-10 ${getRoleColor(profile.role || 'submitter')} ring-2 ring-white`}>
+            <AvatarFallback className="text-white text-sm font-semibold">
               {getInitials(profile.full_name || 'User')}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col space-y-1 leading-none">
-            <p className="font-medium text-sm">{profile.full_name}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="font-semibold text-sm text-gray-900">{profile.full_name}</p>
+            <p className="text-xs text-gray-600 font-medium">
               {getRoleText(profile.role || 'submitter')}
             </p>
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className={`cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <User className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-          <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+        <DropdownMenuItem className={`cursor-pointer hover:bg-gray-50 focus:bg-gray-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <User className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'} text-gray-500`} />
+          <span className="text-gray-700 font-medium">{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className={`cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <Settings className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-          <span>{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
+        <DropdownMenuItem className={`cursor-pointer hover:bg-gray-50 focus:bg-gray-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <Settings className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'} text-gray-500`} />
+          <span className="text-gray-700 font-medium">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
-          className={`cursor-pointer text-red-600 focus:text-red-600 ${isRTL ? 'flex-row-reverse' : ''}`}
+          className={`cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}
           onClick={handleLogout}
         >
-          <LogOut className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-          <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+          <LogOut className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'}`} />
+          <span className="font-medium">{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

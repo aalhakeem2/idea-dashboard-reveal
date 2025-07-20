@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,8 +137,8 @@ export const Dashboard = ({ user }: DashboardProps) => {
       case "evaluator":
         return <EnhancedEvaluatorDashboard profile={profile} activeView={activeView} />;
       case "management":
-        // Use Enhanced Management Dashboard for comprehensive localization
-        return <EnhancedManagementDashboard ideas={ideas} onIdeaUpdated={fetchIdeas} />;
+        // Pass activeView to Enhanced Management Dashboard
+        return <EnhancedManagementDashboard ideas={ideas} onIdeaUpdated={fetchIdeas} activeView={activeView} />;
       default:
         return <EnhancedSubmitterDashboard profile={profile} activeView={activeView} />;
     }

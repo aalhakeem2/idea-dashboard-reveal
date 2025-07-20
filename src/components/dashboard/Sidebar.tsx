@@ -121,8 +121,13 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
 
   const menuItems = getMenuItems();
 
+  const handleItemClick = (itemId: string) => {
+    console.log("Sidebar: Clicking item", itemId, "Current active:", activeView);
+    onViewChange(itemId);
+  };
+
   return (
-    <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
+    <div className={`bg-white border-r border-gray-200 transition-all duration-300 shadow-sm ${collapsed ? 'w-16' : 'w-64'}`}>
       <div className="p-4">
         <div className="flex items-center justify-between mb-8">
           {!collapsed && (
@@ -134,7 +139,7 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
             variant="ghost"
             size="sm"
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2"
+            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
           >
             <LayoutDashboard className="h-4 w-4" />
           </Button>
@@ -143,16 +148,26 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const isActive = activeView === item.id;
+            
             return (
               <Button
                 key={item.id}
-                variant={activeView === item.id ? "default" : "ghost"}
-                className={`w-full justify-start ${language === 'ar' ? 'flex-row-reverse' : ''} ${collapsed ? 'px-2' : 'px-4'}`}
-                onClick={() => onViewChange(item.id)}
+                variant={isActive ? "default" : "ghost"}
+                className={`w-full justify-start transition-all duration-200 ${
+                  language === 'ar' ? 'flex-row-reverse' : ''
+                } ${collapsed ? 'px-2' : 'px-4'} ${
+                  isActive 
+                    ? 'bg-you-accent text-white shadow-md hover:bg-you-accent/90' 
+                    : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                } ${!collapsed ? 'h-12' : 'h-10'}`}
+                onClick={() => handleItemClick(item.id)}
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
               >
-                <Icon className={`h-4 w-4 ${collapsed ? '' : (language === 'ar' ? 'ml-2' : 'mr-2')}`} />
-                {!collapsed && <span>{item.label}</span>}
+                <Icon className={`h-5 w-5 ${collapsed ? '' : (language === 'ar' ? 'ml-3' : 'mr-3')} ${
+                  isActive ? 'text-white' : 'text-gray-500'
+                }`} />
+                {!collapsed && <span className="font-medium">{item.label}</span>}
               </Button>
             );
           })}
@@ -160,11 +175,11 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
 
         {/* Role Badge */}
         {!collapsed && (
-          <div className="mt-8 p-3 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 mb-1" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="mt-8 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+            <div className="text-xs text-gray-500 mb-2 font-medium" dir={language === 'ar' ? 'rtl' : 'ltr'}>
               {language === "ar" ? "الدور الحالي" : "Current Role"}
             </div>
-            <div className="font-medium text-sm capitalize" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+            <div className="font-semibold text-sm capitalize text-gray-800" dir={language === 'ar' ? 'rtl' : 'ltr'}>
               {profile.role === "management" && (language === "ar" ? "إدارة" : "Management")}
               {profile.role === "evaluator" && (language === "ar" ? "مقيم" : "Evaluator")}
               {profile.role === "submitter" && (language === "ar" ? "مقدم أفكار" : "Submitter")}
