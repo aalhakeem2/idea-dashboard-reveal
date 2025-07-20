@@ -1,21 +1,21 @@
 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
   Lightbulb, 
   ClipboardCheck, 
-  BarChart3, 
   Users, 
+  BarChart3, 
   Settings,
-  LogOut,
-  Plus,
-  Zap,
-  UserCheck
+  FileText,
+  UserCheck,
+  Target,
+  Activity,
+  Sparkles
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { Tables } from "@/integrations/supabase/types";
-import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
 
@@ -26,108 +26,151 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => {
-  const { t, isRTL } = useLanguage();
+  const { language } = useLanguage();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const getNavigationItems = () => {
+  const getMenuItems = () => {
     const baseItems = [
-      { id: "dashboard", label: t('sidebar', 'dashboard'), icon: LayoutDashboard },
-      { id: "ideas", label: t('sidebar', 'ideas'), icon: Lightbulb },
+      {
+        id: "dashboard",
+        label: language === "ar" ? "لوحة التحكم" : "Dashboard",
+        icon: LayoutDashboard,
+      },
     ];
 
     switch (profile.role) {
       case "submitter":
         return [
           ...baseItems,
-          { id: "submit", label: t('sidebar', 'submit_idea'), icon: Plus },
-          { id: "my-ideas", label: t('sidebar', 'my_ideas'), icon: ClipboardCheck },
+          {
+            id: "submit-idea",
+            label: language === "ar" ? "إرسال فكرة" : "Submit Idea",
+            icon: Lightbulb,
+          },
+          {
+            id: "my-ideas",
+            label: language === "ar" ? "أفكاري" : "My Ideas",
+            icon: FileText,
+          },
         ];
+
       case "evaluator":
         return [
           ...baseItems,
-          { id: "pending-evaluations", label: t('sidebar', 'pending_reviews'), icon: ClipboardCheck },
-          { id: "analytics", label: t('sidebar', 'analytics'), icon: BarChart3 },
+          {
+            id: "evaluations",
+            label: language === "ar" ? "التقييمات" : "Evaluations",
+            icon: ClipboardCheck,
+          },
+          {
+            id: "assigned-ideas",
+            label: language === "ar" ? "الأفكار المُكلفة" : "Assigned Ideas",
+            icon: Target,
+          },
         ];
+
       case "management":
         return [
           ...baseItems,
-          { id: "evaluator-management", label: t('sidebar', 'evaluator_management'), icon: UserCheck },
-          { id: "analytics", label: t('sidebar', 'analytics'), icon: BarChart3 },
-          { id: "users", label: t('sidebar', 'users'), icon: Users },
-          { id: "settings", label: t('sidebar', 'settings'), icon: Settings },
+          {
+            id: "evaluation-queue",
+            label: language === "ar" ? "طابور التقييم" : "Evaluation Queue",
+            icon: Activity,
+          },
+          {
+            id: "decisions",
+            label: language === "ar" ? "القرارات" : "Decisions",
+            icon: Sparkles,
+          },
+          {
+            id: "analytics",
+            label: language === "ar" ? "التحليلات" : "Analytics",
+            icon: BarChart3,
+          },
+          {
+            id: "ideas",
+            label: language === "ar" ? "جميع الأفكار" : "All Ideas",
+            icon: Lightbulb,
+          },
+          {
+            id: "evaluator-management",
+            label: language === "ar" ? "إدارة المقيمين" : "Evaluator Management",
+            icon: UserCheck,
+          },
+          {
+            id: "evaluator-pool",
+            label: language === "ar" ? "مجموعة المقيمين" : "Evaluator Pool",
+            icon: Users,
+          },
+          {
+            id: "users",
+            label: language === "ar" ? "إدارة المستخدمين" : "User Management",
+            icon: Users,
+          },
+          {
+            id: "settings",
+            label: language === "ar" ? "الإعدادات" : "Settings",
+            icon: Settings,
+          },
         ];
+
       default:
         return baseItems;
     }
   };
 
-  const navigationItems = getNavigationItems();
+  const menuItems = getMenuItems();
 
   return (
-    <div className={`w-64 bg-sidebar shadow-xl flex flex-col border-r border-sidebar-border ${isRTL ? 'border-l border-r-0' : ''}`}>
-      <div className="p-6 border-b border-sidebar-border">
-        <div className={`flex items-center space-x-3 mb-4 ${isRTL ? 'space-x-reverse' : ''}`}>
-          <div className="p-2 bg-you-accent rounded-xl border border-you-accent">
-            <Zap className="h-6 w-6 text-you-purple" />
-          </div>
-          <div className={isRTL ? 'text-right' : 'text-left'}>
-            <h1 className="text-xl font-bold text-sidebar-foreground font-poppins">
-              {t('sidebar', 'app_title')}
-            </h1>
-            <p className="text-sm text-sidebar-foreground/80 font-medium">
-              {t('sidebar', 'innovation_hub')}
-            </p>
-          </div>
-        </div>
-        <div className="bg-you-accent/50 rounded-lg p-3 border border-you-accent/30">
-          <p className={`text-sm font-medium text-sidebar-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-            {profile.full_name}
-          </p>
-          <p className={`text-xs text-sidebar-foreground/70 capitalize ${isRTL ? 'text-right' : 'text-left'}`}>
-            {profile.role}
-          </p>
-          {profile.department && (
-            <p className={`text-xs text-sidebar-foreground/60 ${isRTL ? 'text-right' : 'text-left'}`}>
-              {profile.department}
-            </p>
+    <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-8">
+          {!collapsed && (
+            <h2 className="text-xl font-bold text-gray-800" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {language === "ar" ? "نظام الأفكار" : "Ideas System"}
+            </h2>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-2"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+          </Button>
         </div>
-      </div>
-      
-      <nav className="flex-1 p-4 space-y-2">
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Button
-              key={item.id}
-              variant={activeView === item.id ? "default" : "ghost"}
-              className={cn(
-                `w-full h-12 font-medium transition-all duration-200 ${isRTL ? 'justify-end' : 'justify-start'}`,
-                activeView === item.id 
-                  ? "bg-you-accent text-sidebar-foreground shadow-md border border-you-accent" 
-                  : "text-sidebar-foreground hover:bg-you-accent/30 hover:text-sidebar-foreground"
-              )}
-              onClick={() => onViewChange(item.id)}
-            >
-              <Icon className={`h-5 w-5 ${isRTL ? 'ml-3' : 'mr-3'}`} />
-              {item.label}
-            </Button>
-          );
-        })}
-      </nav>
-      
-      <div className="p-4 border-t border-sidebar-border">
-        <Button
-          variant="ghost"
-          className={`w-full h-12 text-red-500 hover:text-red-600 hover:bg-red-50 font-medium ${isRTL ? 'justify-end' : 'justify-start'}`}
-          onClick={handleSignOut}
-        >
-          <LogOut className={`h-5 w-5 ${isRTL ? 'ml-3' : 'mr-3'}`} />
-          {t('sidebar', 'sign_out')}
-        </Button>
+
+        <nav className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.id}
+                variant={activeView === item.id ? "default" : "ghost"}
+                className={`w-full justify-start ${language === 'ar' ? 'flex-row-reverse' : ''} ${collapsed ? 'px-2' : 'px-4'}`}
+                onClick={() => onViewChange(item.id)}
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
+              >
+                <Icon className={`h-4 w-4 ${collapsed ? '' : (language === 'ar' ? 'ml-2' : 'mr-2')}`} />
+                {!collapsed && <span>{item.label}</span>}
+              </Button>
+            );
+          })}
+        </nav>
+
+        {/* Role Badge */}
+        {!collapsed && (
+          <div className="mt-8 p-3 bg-gray-50 rounded-lg">
+            <div className="text-xs text-gray-500 mb-1" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {language === "ar" ? "الدور الحالي" : "Current Role"}
+            </div>
+            <div className="font-medium text-sm capitalize" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {profile.role === "management" && (language === "ar" ? "إدارة" : "Management")}
+              {profile.role === "evaluator" && (language === "ar" ? "مقيم" : "Evaluator")}
+              {profile.role === "submitter" && (language === "ar" ? "مقدم أفكار" : "Submitter")}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -10,11 +10,12 @@ import { EvaluatorDashboard } from "./EvaluatorDashboard";
 import { ManagementDashboard } from "./ManagementDashboard";
 import { EnhancedSubmitterDashboard } from "./EnhancedSubmitterDashboard";
 import { EnhancedEvaluatorDashboard } from "./EnhancedEvaluatorDashboard";
+import { EnhancedManagementDashboard } from "./EnhancedManagementDashboard";
 import { ProfileSetup } from "./ProfileSetup";
 import { useToast } from "@/hooks/use-toast";
 import { seedSampleData, forceSeedSampleData } from "@/utils/sampleDataSeeder";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Database } from "lucide-react";
+import { RefreshCw, Database, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type Profile = Tables<"profiles">;
@@ -28,12 +29,19 @@ export const Dashboard = ({ user }: DashboardProps) => {
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
+  const [ideas, setIdeas] = useState<any[]>([]);
   const { toast } = useToast();
   const { t } = useLanguage();
 
   useEffect(() => {
     fetchProfile();
   }, [user.id]);
+
+  useEffect(() => {
+    if (profile) {
+      fetchIdeas();
+    }
+  }, [profile]);
 
   const fetchProfile = async () => {
     try {
@@ -68,6 +76,21 @@ export const Dashboard = ({ user }: DashboardProps) => {
     }
   };
 
+  const fetchIdeas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("ideas")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setIdeas(data || []);
+    } catch (error) {
+      console.error("Error fetching ideas:", error);
+    }
+  };
+
   const handleProfileUpdate = (updatedProfile: Profile) => {
     setProfile(updatedProfile);
   };
@@ -80,6 +103,8 @@ export const Dashboard = ({ user }: DashboardProps) => {
         title: "Success",
         description: "Sample data has been seeded successfully!",
       });
+      // Refresh ideas after seeding
+      fetchIdeas();
     } catch (error) {
       console.error("Error seeding data:", error);
       toast({
@@ -113,7 +138,8 @@ export const Dashboard = ({ user }: DashboardProps) => {
       case "evaluator":
         return <EnhancedEvaluatorDashboard profile={profile} activeView={activeView} />;
       case "management":
-        return <ManagementDashboard profile={profile} activeView={activeView} />;
+        // Use Enhanced Management Dashboard for comprehensive localization
+        return <EnhancedManagementDashboard ideas={ideas} onIdeaUpdated={fetchIdeas} />;
       default:
         return <EnhancedSubmitterDashboard profile={profile} activeView={activeView} />;
     }
@@ -129,8 +155,17 @@ export const Dashboard = ({ user }: DashboardProps) => {
       <div className="flex-1 flex flex-col">
         <Header profile={profile} />
         <main className="flex-1 p-6">
-          {/* Sample Data Seeding Button */}
-          <div className="mb-4 flex justify-end">
+          {/* Enhanced Controls */}
+          <div className="mb-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              {profile.role === "management" && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span>Enhanced Management Dashboard</span>
+                </div>
+              )}
+            </div>
+            
             <Button
               onClick={handleForceSeed}
               disabled={seeding}

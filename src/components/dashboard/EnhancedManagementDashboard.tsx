@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,9 @@ import {
   CheckCircle2, 
   AlertTriangle,
   FileCheck,
-  Target
+  Target,
+  Activity,
+  Lightbulb
 } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -20,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ManagementDecisionPanel } from "./ManagementDecisionPanel";
 import { EvaluationProgressMatrix } from "./EvaluationProgressMatrix";
 import { RevisionWorkflowSimple } from "./RevisionWorkflowSimple";
+import { IdeaCard } from "./IdeaCard";
 
 interface EnhancedManagementDashboardProps {
   ideas: any[];
@@ -52,6 +56,7 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
   });
   const [selectedIdea, setSelectedIdea] = useState<any>(null);
   const [evaluationData, setEvaluationData] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("evaluation-queue");
 
   useEffect(() => {
     calculateStats();
@@ -62,7 +67,7 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
 
   const calculateStats = () => {
     const total = ideas.length;
-    const pending = ideas.filter(i => i.status === 'under_review').length;
+    const pending = ideas.filter(i => i.status === 'under_review' || i.status === 'submitted').length;
     const evaluated = ideas.filter(i => i.status === 'evaluated' || i.average_evaluation_score > 0).length;
     const approved = ideas.filter(i => i.status === 'approved').length;
     
@@ -115,6 +120,10 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
   const evaluatedIdeas = ideas.filter(idea => 
     idea.status === 'evaluated' || 
     (idea.average_evaluation_score && idea.average_evaluation_score > 0)
+  );
+
+  const pendingIdeas = ideas.filter(idea => 
+    idea.status === 'under_review' || idea.status === 'submitted'
   );
 
   return (
@@ -171,7 +180,7 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
       </div>
 
       {/* Main Dashboard */}
-      <Tabs defaultValue="evaluation-queue" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="evaluation-queue">
             {language === 'ar' ? 'طابور التقييم' : 'Evaluation Queue'}
@@ -187,38 +196,47 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
         <TabsContent value="evaluation-queue" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{language === 'ar' ? 'الأفكار قيد التقييم' : 'Ideas Under Evaluation'}</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                {language === 'ar' ? 'الأفكار قيد التقييم' : 'Ideas Under Evaluation'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {ideas.filter(idea => idea.status === 'under_review' || idea.status === 'submitted').map((idea) => (
-                  <div
-                    key={idea.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer"
-                    onClick={() => setSelectedIdea(idea)}
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium">{idea.title}</h4>
-                      <p className="text-sm text-muted-foreground line-clamp-1">{idea.description}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline">{idea.idea_reference_code}</Badge>
-                        <Badge className={getStatusBadgeColor(idea.status)}>
-                          {idea.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(idea.created_at).toLocaleDateString()}
-                      </div>
-                      {idea.average_evaluation_score && (
-                        <div className="text-lg font-bold text-primary">
-                          {idea.average_evaluation_score.toFixed(1)}/10
-                        </div>
-                      )}
-                    </div>
+                {pendingIdeas.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {language === 'ar' ? 'لا توجد أفكار في انتظار التقييم' : 'No ideas pending evaluation'}
                   </div>
-                ))}
+                ) : (
+                  pendingIdeas.map((idea) => (
+                    <div
+                      key={idea.id}
+                      className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer"
+                      onClick={() => setSelectedIdea(idea)}
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-medium">{idea.title}</h4>
+                        <p className="text-sm text-muted-foreground line-clamp-1">{idea.description}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline">{idea.idea_reference_code}</Badge>
+                          <Badge className={getStatusBadgeColor(idea.status)}>
+                            {idea.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(idea.created_at).toLocaleDateString()}
+                        </div>
+                        {idea.average_evaluation_score && (
+                          <div className="text-lg font-bold text-primary">
+                            {idea.average_evaluation_score.toFixed(1)}/10
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -236,32 +254,38 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {evaluatedIdeas.map((idea) => (
-                    <div
-                      key={idea.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedIdea?.id === idea.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
-                      }`}
-                      onClick={() => setSelectedIdea(idea)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h5 className="font-medium">{idea.title}</h5>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{idea.idea_reference_code}</Badge>
-                            {idea.average_evaluation_score && (
-                              <Badge variant="secondary" className="text-xs">
-                                {idea.average_evaluation_score.toFixed(1)}/10
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <Button size="sm" variant="outline">
-                          {language === 'ar' ? 'اتخاذ قرار' : 'Decide'}
-                        </Button>
-                      </div>
+                  {evaluatedIdeas.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {language === 'ar' ? 'لا توجد أفكار جاهزة للقرار' : 'No ideas ready for decision'}
                     </div>
-                  ))}
+                  ) : (
+                    evaluatedIdeas.map((idea) => (
+                      <div
+                        key={idea.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedIdea?.id === idea.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                        }`}
+                        onClick={() => setSelectedIdea(idea)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-medium">{idea.title}</h5>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">{idea.idea_reference_code}</Badge>
+                              {idea.average_evaluation_score && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {idea.average_evaluation_score.toFixed(1)}/10
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline">
+                            {language === 'ar' ? 'اتخاذ قرار' : 'Decide'}
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -343,6 +367,27 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Recent Ideas Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5" />
+            {language === 'ar' ? 'نظرة عامة على الأفكار' : 'Ideas Overview'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ideas.slice(0, 6).map((idea) => (
+              <IdeaCard 
+                key={idea.id} 
+                idea={idea}
+                onViewActivity={(idea) => setSelectedIdea(idea)}
+              />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
