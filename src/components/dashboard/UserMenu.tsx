@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User, Loader2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,40 +24,49 @@ interface UserMenuProps {
 export const UserMenu = ({ profile }: UserMenuProps) => {
   const { language, isRTL } = useLanguage();
   const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
     try {
-      // First clear local session state
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.clear();
+      console.log('Starting logout process...');
       
-      // Attempt to sign out from server
+      // Sign out from Supabase - this will trigger auth state change
       const { error } = await supabase.auth.signOut();
       
-      // Even if server logout fails, we continue with local cleanup
-      if (error && error.message !== 'Session not found') {
-        console.warn('Server logout warning:', error);
+      if (error) {
+        console.error('Logout error:', error);
+        toast({
+          title: language === 'ar' ? 'خطأ في تسجيل الخروج' : 'Logout Error',
+          description: language === 'ar' ? 'حدث خطأ أثناء تسجيل الخروج' : 'An error occurred during logout',
+          variant: "destructive",
+        });
+        setIsLoggingOut(false);
+        return;
       }
+
+      console.log('Logout successful');
       
-      // Force page reload to ensure complete cleanup
-      window.location.href = '/';
-      
+      // Show success toast
       toast({
         title: language === 'ar' ? 'تم تسجيل الخروج' : 'Logged out',
         description: language === 'ar' ? 'تم تسجيل خروجك بنجاح' : 'You have been logged out successfully',
       });
+
+      // Let the auth state change handle the redirect naturally
+      // No need for manual localStorage clearing or forced page reload
+      
     } catch (error) {
-      console.error('Logout error:', error);
-      
-      // Force logout even if there's an error
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = '/';
+      console.error('Unexpected logout error:', error);
       
       toast({
-        title: language === 'ar' ? 'تم تسجيل الخروج' : 'Logged out',
-        description: language === 'ar' ? 'تم تسجيل خروجك بنجاح' : 'You have been logged out successfully',
+        title: language === 'ar' ? 'خطأ غير متوقع' : 'Unexpected Error',
+        description: language === 'ar' ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred',
+        variant: "destructive",
       });
+      
+      setIsLoggingOut(false);
     }
   };
 
@@ -102,6 +111,7 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
         <Button 
           variant="ghost" 
           className="relative h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 border-2 border-white/20 hover:border-white/40 transition-all duration-200 shadow-lg hover:shadow-xl"
+          disabled={isLoggingOut}
         >
           <Avatar className={`h-8 w-8 ${getRoleColor(profile.role || 'submitter')} ring-2 ring-white/30`}>
             <AvatarFallback className="text-white font-bold text-sm">
@@ -139,11 +149,21 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
-          className={`cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}
+          className={`cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''} ${isLoggingOut ? 'opacity-50' : ''}`}
           onClick={handleLogout}
+          disabled={isLoggingOut}
         >
-          <LogOut className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'}`} />
-          <span className="font-medium">{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+          {isLoggingOut ? (
+            <Loader2 className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'} animate-spin`} />
+          ) : (
+            <LogOut className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'}`} />
+          )}
+          <span className="font-medium">
+            {isLoggingOut 
+              ? (language === 'ar' ? 'جاري تسجيل الخروج...' : 'Logging out...') 
+              : (language === 'ar' ? 'تسجيل الخروج' : 'Logout')
+            }
+          </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
