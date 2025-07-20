@@ -58,6 +58,8 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
   const [evaluationData, setEvaluationData] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("evaluation-queue");
 
+  console.log("EnhancedManagementDashboard: Current active tab:", activeTab);
+
   useEffect(() => {
     calculateStats();
     if (selectedIdea) {
@@ -100,6 +102,11 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
     } catch (error) {
       console.error("Error fetching evaluation data:", error);
     }
+  };
+
+  const handleTabChange = (value: string) => {
+    console.log("Tab changing from", activeTab, "to", value);
+    setActiveTab(value);
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -180,15 +187,24 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
       </div>
 
       {/* Main Dashboard */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="evaluation-queue">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3 bg-muted">
+          <TabsTrigger 
+            value="evaluation-queue"
+            className="data-[state=active]:bg-background data-[state=active]:text-foreground"
+          >
             {language === 'ar' ? 'طابور التقييم' : 'Evaluation Queue'}
           </TabsTrigger>
-          <TabsTrigger value="decisions">
+          <TabsTrigger 
+            value="decisions"
+            className="data-[state=active]:bg-background data-[state=active]:text-foreground"
+          >
             {language === 'ar' ? 'القرارات' : 'Decisions'}
           </TabsTrigger>
-          <TabsTrigger value="analytics">
+          <TabsTrigger 
+            value="analytics"
+            className="data-[state=active]:bg-background data-[state=active]:text-foreground"
+          >
             {language === 'ar' ? 'التحليلات' : 'Analytics'}
           </TabsTrigger>
         </TabsList>
