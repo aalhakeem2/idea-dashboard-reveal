@@ -104,7 +104,7 @@ export const RevisionWorkflowSimple: React.FC<RevisionWorkflowSimpleProps> = ({
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("revision_areas")}</label>
               <LocalizedDropdown
-                listKey="revision_categories"
+                listKey="revision_areas"
                 value={selectedAreas[0] || ""}
                 onValueChange={(value) => setSelectedAreas([value])}
                 placeholder={language === 'ar' ? 'اختر مجال التحسين' : 'Select improvement area'}
