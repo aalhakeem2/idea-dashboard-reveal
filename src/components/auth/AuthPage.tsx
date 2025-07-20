@@ -31,9 +31,23 @@ export const AuthPage = () => {
     { 
       email: "evaluator@you.com", 
       name: "Abdurhman Alhakeem", 
-      role: "Evaluator",
+      role: "Evaluator 1",
       userRole: "evaluator" as const,
       id: "f506d6d7-bae4-4268-88c6-88cfb194dd7f"
+    },
+    { 
+      email: "alhakeem006644@gmail.com", 
+      name: "Ahmed Alhakeem", 
+      role: "Evaluator 2",
+      userRole: "evaluator" as const,
+      id: "91214bfa-111d-4fc4-8cec-af7bbe97374d"
+    },
+    { 
+      email: "test@you.com", 
+      name: "Mohammed Alhakeem", 
+      role: "Evaluator 3",
+      userRole: "evaluator" as const,
+      id: "e4f73997-7a96-4bc2-95a6-37be29539adc"
     },
     { 
       email: "osama.murshed@gmail.com", 
