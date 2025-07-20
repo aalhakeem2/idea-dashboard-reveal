@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ClipboardCheck, Star, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
 
 type Idea = Tables<"ideas">;
 type Profile = Tables<"profiles">;
+type EvaluatorAssignment = Tables<"evaluator_assignments">;
 
 interface EvaluationFormProps {
   idea: Idea;
@@ -24,11 +26,14 @@ interface EvaluationFormProps {
 
 export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel }: EvaluationFormProps) => {
   const [loading, setLoading] = useState(false);
+  const [assignmentLoading, setAssignmentLoading] = useState(true);
+  const [assignment, setAssignment] = useState<EvaluatorAssignment | null>(null);
   const [scores, setScores] = useState({
     feasibility_score: [5],
     impact_score: [5],
     innovation_score: [5], 
     overall_score: [5],
+    enrichment_score: [3],
   });
   const [feedback, setFeedback] = useState("");
   const [recommendation, setRecommendation] = useState("");
@@ -36,23 +41,85 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
 
+  useEffect(() => {
+    fetchEvaluatorAssignment();
+  }, [idea.id, profile.id]);
+
+  const fetchEvaluatorAssignment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("evaluator_assignments")
+        .select("*")
+        .eq("idea_id", idea.id)
+        .eq("evaluator_id", profile.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching evaluator assignment:", error);
+        toast({
+          title: t('evaluation', 'error'),
+          description: "Failed to fetch assignment details",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data) {
+        toast({
+          title: t('evaluation', 'error'),
+          description: "No active assignment found for this evaluation",
+          variant: "destructive",
+        });
+        onCancel();
+        return;
+      }
+
+      setAssignment(data);
+    } catch (error) {
+      console.error("Error fetching evaluator assignment:", error);
+      toast({
+        title: t('evaluation', 'error'),
+        description: "Failed to fetch assignment details",
+        variant: "destructive",
+      });
+    } finally {
+      setAssignmentLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!assignment) {
+      toast({
+        title: t('evaluation', 'error'),
+        description: "No valid assignment found",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.from("evaluations").insert({
         idea_id: idea.id,
         evaluator_id: profile.id,
+        evaluation_type: assignment.evaluation_type,
         feasibility_score: scores.feasibility_score[0],
         impact_score: scores.impact_score[0],
         innovation_score: scores.innovation_score[0],
         overall_score: scores.overall_score[0],
+        enrichment_score: scores.enrichment_score[0],
         feedback,
         recommendation,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error submitting evaluation:", error);
+        throw error;
+      }
 
       toast({
         title: t('evaluation', 'evaluation_submitted'),
@@ -75,6 +142,39 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
   const updateScore = (scoreType: keyof typeof scores, value: number[]) => {
     setScores(prev => ({ ...prev, [scoreType]: value }));
   };
+
+  if (assignmentLoading) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardContent className="py-8 text-center">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!assignment) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardContent className="py-8 text-center">
+            <X className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Assignment Found</h3>
+            <p className="text-muted-foreground mb-4">
+              You don't have an active assignment for this idea evaluation.
+            </p>
+            <Button onClick={onCancel}>Go Back</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -100,6 +200,11 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
           <CardDescription className={isRTL ? 'text-right' : 'text-left'}>
             {t('evaluation', 'provide_evaluation_for')} {idea.idea_reference_code || idea.title}
           </CardDescription>
+          <div className="flex items-center gap-2 mt-2">
+            <Badge variant="secondary" className="capitalize">
+              {assignment.evaluation_type} Evaluation
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -188,6 +293,25 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
                   <span>{t('evaluation', 'poor')}</span>
                   <span>{t('evaluation', 'excellent')}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Enrichment Score */}
+            <div className="space-y-3">
+              <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
+                Enrichment Score: {scores.enrichment_score[0]}/5
+              </Label>
+              <Slider
+                value={scores.enrichment_score}
+                onValueChange={(value) => updateScore('enrichment_score', value)}
+                max={5}
+                min={1}
+                step={1}
+                className="w-full"
+              />
+              <div className={`flex justify-between text-xs text-muted-foreground ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <span>Needs Significant Enrichment</span>
+                <span>Ready to Implement</span>
               </div>
             </div>
 
