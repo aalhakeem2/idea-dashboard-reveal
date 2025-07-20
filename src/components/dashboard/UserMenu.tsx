@@ -93,7 +93,6 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
       <DropdownMenuContent 
         className={`w-56 ${isRTL ? 'text-right' : 'text-left'}`} 
         align={isRTL ? "start" : "end"}
-        dir={isRTL ? 'rtl' : 'ltr'}
       >
         <div className="flex items-center justify-start space-x-2 p-2">
           <Avatar className={`h-8 w-8 ${getRoleColor(profile.role || 'submitter')}`}>
