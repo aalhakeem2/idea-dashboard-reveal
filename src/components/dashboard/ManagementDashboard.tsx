@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from "recharts";
 import { TrendingUp, Users, Lightbulb, CheckCircle, Clock, Target, Activity, Settings, UserCheck } from "lucide-react";
 import { IdeaCard } from "./IdeaCard";
 import { IdeaTimeline } from "./IdeaTimeline";
@@ -97,15 +97,29 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
       if (error) throw error;
 
+      // Get category translations
+      const { data: translations } = await supabase
+        .from("translations")
+        .select("*")
+        .eq("interface_name", "categories");
+
       const categoryCount = data?.reduce((acc: any, idea) => {
         acc[idea.category] = (acc[idea.category] || 0) + 1;
         return acc;
       }, {});
 
-      const chartData = Object.entries(categoryCount || {}).map(([category, count]) => ({
-        name: category.replace("_", " "),
-        value: count,
-      }));
+      const chartData = Object.entries(categoryCount || {}).map(([category, count]) => {
+        const translation = translations?.find(t => t.position_key === category);
+        const localizedName = translation 
+          ? (language === 'ar' ? translation.arabic_text : translation.english_text)
+          : category.replace("_", " ");
+        
+        return {
+          name: localizedName,
+          value: count,
+          originalKey: category
+        };
+      });
 
       setCategoryData(chartData);
     } catch (error) {
@@ -328,8 +342,12 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
         <Card>
           <CardHeader>
-            <CardTitle>Ideas by Category</CardTitle>
-            <CardDescription>Distribution across different categories</CardDescription>
+            <CardTitle dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {language === 'ar' ? 'الأفكار حسب الفئة' : 'Ideas by Category'}
+            </CardTitle>
+            <CardDescription dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {language === 'ar' ? 'التوزيع عبر الفئات المختلفة' : 'Distribution across different categories'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -338,17 +356,43 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
                   data={categoryData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  innerRadius={0}
+                  outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
+                  labelLine={false}
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, name, percent }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    
+                    return percent > 0.05 ? (
+                      <text 
+                        x={x} 
+                        y={y} 
+                        fill="white" 
+                        textAnchor={x > cx ? 'start' : 'end'} 
+                        dominantBaseline="central"
+                        fontSize={12}
+                        fontWeight="bold"
+                      >
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    ) : null;
+                  }}
                 >
                   {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value, name) => [value, name]}
+                  contentStyle={{ 
+                    direction: language === 'ar' ? 'rtl' : 'ltr',
+                    textAlign: language === 'ar' ? 'right' : 'left'
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -506,8 +550,12 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
 
         <Card>
           <CardHeader>
-            <CardTitle>Ideas by Category</CardTitle>
-            <CardDescription>Distribution across different categories</CardDescription>
+            <CardTitle dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {language === 'ar' ? 'الأفكار حسب الفئة' : 'Ideas by Category'}
+            </CardTitle>
+            <CardDescription dir={language === 'ar' ? 'rtl' : 'ltr'}>
+              {language === 'ar' ? 'التوزيع عبر الفئات المختلفة' : 'Distribution across different categories'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -516,17 +564,43 @@ export const ManagementDashboard = ({ profile, activeView }: ManagementDashboard
                   data={categoryData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  innerRadius={0}
+                  outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
+                  labelLine={false}
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, name, percent }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    
+                    return percent > 0.05 ? (
+                      <text 
+                        x={x} 
+                        y={y} 
+                        fill="white" 
+                        textAnchor={x > cx ? 'start' : 'end'} 
+                        dominantBaseline="central"
+                        fontSize={12}
+                        fontWeight="bold"
+                      >
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    ) : null;
+                  }}
                 >
                   {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value, name) => [value, name]}
+                  contentStyle={{ 
+                    direction: language === 'ar' ? 'rtl' : 'ltr',
+                    textAlign: language === 'ar' ? 'right' : 'left'
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
