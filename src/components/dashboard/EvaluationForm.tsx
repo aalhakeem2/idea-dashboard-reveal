@@ -75,6 +75,29 @@ export const EvaluationForm = ({ idea, profile, onEvaluationSubmitted, onCancel 
         return;
       }
 
+      // Check if already evaluated for this assignment
+      const { data: existingEvaluation, error: evalError } = await supabase
+        .from("evaluations")
+        .select("id")
+        .eq("idea_id", idea.id)
+        .eq("evaluator_id", profile.id)
+        .eq("evaluation_type", data.evaluation_type)
+        .maybeSingle();
+
+      if (evalError) {
+        console.error("Error checking existing evaluation:", evalError);
+      }
+
+      if (existingEvaluation) {
+        toast({
+          title: t('evaluation', 'error'),
+          description: "You have already evaluated this idea for this evaluation type",
+          variant: "destructive",
+        });
+        onCancel();
+        return;
+      }
+
       setAssignment(data);
     } catch (error) {
       console.error("Error fetching evaluator assignment:", error);

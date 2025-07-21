@@ -93,6 +93,11 @@ export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => 
             icon: Activity,
           },
           {
+            id: "assign-evaluators",
+            label: language === "ar" ? "تعيين المقيمين" : "Assign Evaluators",
+            icon: UserCheck,
+          },
+          {
             id: "decisions",
             label: language === "ar" ? "القرارات" : "Decisions",
             icon: Sparkles,

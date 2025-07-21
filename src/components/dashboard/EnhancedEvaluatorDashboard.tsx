@@ -24,6 +24,7 @@ interface EnhancedEvaluatorDashboardProps {
 export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEvaluatorDashboardProps) => {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [showEvaluationForm, setShowEvaluationForm] = useState(false);
@@ -37,20 +38,32 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
     try {
       console.log("Evaluator Dashboard: Fetching data for profile:", profile.id);
       
-      // Fetch ideas that are ready for evaluation
-      const { data: ideasData, error: ideasError } = await supabase
-        .from("ideas")
-        .select("*")
-        .in("status", ["submitted", "under_review"])
-        .order("submitted_at", { ascending: true });
+      // First, fetch evaluator's active assignments
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from("evaluator_assignments")
+        .select(`
+          *,
+          ideas (*)
+        `)
+        .eq("evaluator_id", profile.id)
+        .eq("is_active", true);
 
-      if (ideasError) {
-        console.error("Error fetching ideas:", ideasError);
-        throw ideasError;
+      if (assignmentsError) {
+        console.error("Error fetching assignments:", assignmentsError);
+        throw assignmentsError;
       }
+
+      console.log("Evaluator Dashboard: Found assignments:", assignmentsData?.length || 0, assignmentsData);
+      setAssignments(assignmentsData || []);
+
+      // Extract unique ideas from assignments
+      const assignedIdeas = assignmentsData
+        ?.map(assignment => assignment.ideas)
+        .filter(idea => idea && (idea.status === "submitted" || idea.status === "under_review"))
+        || [];
       
-      console.log("Evaluator Dashboard: Found ideas:", ideasData?.length || 0, ideasData);
-      setIdeas(ideasData || []);
+      console.log("Evaluator Dashboard: Found assigned ideas:", assignedIdeas.length, assignedIdeas);
+      setIdeas(assignedIdeas);
 
       // Fetch evaluator's existing evaluations
       const { data: evaluationsData, error: evaluationsError } = await supabase
@@ -105,7 +118,14 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
   };
 
   const isIdeaEvaluated = (ideaId: string) => {
-    return evaluations.some(evaluation => evaluation.idea_id === ideaId);
+    // Check if evaluator has completed evaluation for their assigned type
+    const assignment = assignments.find(a => a.idea_id === ideaId);
+    if (!assignment) return false;
+    
+    return evaluations.some(evaluation => 
+      evaluation.idea_id === ideaId && 
+      evaluation.evaluation_type === assignment.evaluation_type
+    );
   };
 
   const getEvaluationStats = () => {

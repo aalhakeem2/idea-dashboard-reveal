@@ -28,6 +28,7 @@ import { UserManagementView } from "./views/UserManagementView";
 import { SettingsView } from "./views/SettingsView";
 import { EvaluatorManagementView } from "./views/EvaluatorManagementView";
 import { EvaluatorPoolView } from "./views/EvaluatorPoolView";
+import { EvaluatorAssignmentDashboard } from "./EvaluatorAssignmentDashboard";
 
 interface EnhancedManagementDashboardProps {
   ideas: any[];
@@ -144,6 +145,8 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
         return renderDashboardView();
       case "evaluation-queue":
         return renderEvaluationQueueView();
+      case "assign-evaluators":
+        return <EvaluatorAssignmentDashboard profile={profile} />;
       case "decisions":
         return renderDecisionsView();
       case "analytics":
