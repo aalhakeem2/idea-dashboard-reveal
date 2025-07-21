@@ -83,7 +83,7 @@ export const EvaluationManagementView: React.FC<EvaluationManagementViewProps> =
           )
         `)
         .eq("is_active", true)
-        .in("status", ["submitted", "under_review", "evaluated"])
+        .in("status", ["submitted", "under_review"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;

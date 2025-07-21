@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
-import { Sidebar } from "./Sidebar";
+import Sidebar from "./Sidebar";
 import { Header } from "./Header";
 import { SubmitterDashboard } from "./SubmitterDashboard";
 import { EvaluatorDashboard } from "./EvaluatorDashboard";
@@ -147,7 +147,7 @@ export const Dashboard = ({ user }: DashboardProps) => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
-        profile={profile} 
+        role={profile.role} 
         activeView={activeView} 
         onViewChange={setActiveView} 
       />

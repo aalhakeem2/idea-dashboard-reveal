@@ -63,15 +63,13 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
         .from("evaluations")
         .select(`
           *,
-          evaluator_assignments!inner(
+          evaluator_assignments!evaluations_idea_id_evaluator_id_evaluation_type_fkey(
             evaluator_id,
             evaluation_type,
-            is_active,
-            profiles!evaluator_assignments_evaluator_id_fkey(full_name)
+            is_active
           )
         `)
-        .eq("idea_id", ideaId)
-        .eq("evaluator_assignments.is_active", true);
+        .eq("idea_id", ideaId);
 
       if (error) throw error;
 
@@ -95,7 +93,7 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
         avgScores,
         evaluations: evaluations.map(e => ({
           type: e.evaluation_type,
-          evaluator: e.evaluator_assignments.profiles?.full_name || 'Unknown',
+          evaluator: 'Evaluator',
           status: e.overall_score ? 'completed' : 'pending',
           score: e.overall_score,
           feedback: e.feedback,
@@ -229,12 +227,12 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
             <div className="space-y-2">
               <h5 className="font-medium text-sm">{language === 'ar' ? 'حالة المقيمين' : 'Evaluator Status'}</h5>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {evaluationSummary.evaluations.map((eval: any, index: number) => (
+                {evaluationSummary.evaluations.map((evaluation: any, index: number) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-background rounded text-xs">
-                    <span className="font-medium">{eval.type}</span>
-                    <Badge variant={eval.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                      {eval.status === 'completed' ? 
-                        `${eval.score}/10` : 
+                    <span className="font-medium">{evaluation.type}</span>
+                    <Badge variant={evaluation.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                      {evaluation.status === 'completed' ? 
+                        `${evaluation.score}/10` : 
                         (language === 'ar' ? 'في الانتظار' : 'Pending')
                       }
                     </Badge>
