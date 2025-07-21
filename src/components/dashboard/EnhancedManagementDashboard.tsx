@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +28,7 @@ import { SettingsView } from "./views/SettingsView";
 import { EvaluatorManagementView } from "./views/EvaluatorManagementView";
 import { EvaluatorPoolView } from "./views/EvaluatorPoolView";
 import { EvaluatorAssignmentDashboard } from "./EvaluatorAssignmentDashboard";
+import { EvaluationManagementView } from "./EvaluationManagementView";
 
 interface EnhancedManagementDashboardProps {
   ideas: any[];
@@ -147,6 +147,8 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
         return renderEvaluationQueueView();
       case "assign-evaluators":
         return <EvaluatorAssignmentDashboard profile={profile} />;
+      case "evaluation-management":
+        return <EvaluationManagementView profile={profile} onIdeaUpdated={onIdeaUpdated} />;
       case "decisions":
         return renderDecisionsView();
       case "analytics":

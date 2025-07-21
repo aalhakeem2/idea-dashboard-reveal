@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Clock, Users, BarChart3 } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
 import { useListOfValues } from "@/hooks/useListOfValues";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -41,6 +42,7 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
   const [conditionsEn, setConditionsEn] = useState<string>("");
   const [conditionsAr, setConditionsAr] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [evaluationSummary, setEvaluationSummary] = useState<any>(null);
 
   const decisionOptions = [
     { value: "approved", label: t("approve"), icon: CheckCircle, color: "success" },
@@ -48,6 +50,62 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
     { value: "needs_revision", label: t("request_revision"), icon: AlertCircle, color: "warning" },
     { value: "conditional_approval", label: t("conditional_approval"), icon: Clock, color: "secondary" }
   ];
+
+  useEffect(() => {
+    if (ideaId) {
+      fetchEvaluationSummary();
+    }
+  }, [ideaId]);
+
+  const fetchEvaluationSummary = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("evaluations")
+        .select(`
+          *,
+          evaluator_assignments!inner(
+            evaluator_id,
+            evaluation_type,
+            is_active,
+            profiles!evaluator_assignments_evaluator_id_fkey(full_name)
+          )
+        `)
+        .eq("idea_id", ideaId)
+        .eq("evaluator_assignments.is_active", true);
+
+      if (error) throw error;
+
+      // Process evaluation data
+      const evaluations = data || [];
+      const completed = evaluations.filter(e => e.overall_score !== null);
+      const total = evaluations.length;
+
+      const avgScores = completed.length > 0 ? {
+        feasibility: completed.reduce((sum, e) => sum + (e.feasibility_score || 0), 0) / completed.length,
+        impact: completed.reduce((sum, e) => sum + (e.impact_score || 0), 0) / completed.length,
+        innovation: completed.reduce((sum, e) => sum + (e.innovation_score || 0), 0) / completed.length,
+        overall: completed.reduce((sum, e) => sum + (e.overall_score || 0), 0) / completed.length,
+        enrichment: completed.reduce((sum, e) => sum + (e.enrichment_score || 0), 0) / completed.length
+      } : null;
+
+      setEvaluationSummary({
+        total,
+        completed: completed.length,
+        progress: Math.round((completed.length / total) * 100),
+        avgScores,
+        evaluations: evaluations.map(e => ({
+          type: e.evaluation_type,
+          evaluator: e.evaluator_assignments.profiles?.full_name || 'Unknown',
+          status: e.overall_score ? 'completed' : 'pending',
+          score: e.overall_score,
+          feedback: e.feedback,
+          recommendation: e.recommendation
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching evaluation summary:", error);
+    }
+  };
 
   const handleSubmitDecision = async () => {
     if (!selectedDecision) {
@@ -133,6 +191,60 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
         <p className="text-sm text-muted-foreground">{ideaTitle}</p>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Evaluation Summary */}
+        {evaluationSummary && (
+          <div className="space-y-4 p-4 bg-muted/20 rounded-lg">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                {language === 'ar' ? 'ملخص التقييم' : 'Evaluation Summary'}
+              </h4>
+              <Badge variant="outline">
+                {evaluationSummary.completed}/{evaluationSummary.total} {language === 'ar' ? 'مكتمل' : 'Completed'}
+              </Badge>
+            </div>
+            
+            {evaluationSummary.avgScores && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="text-center">
+                  <div className="font-bold text-lg">{evaluationSummary.avgScores.overall.toFixed(1)}</div>
+                  <div className="text-muted-foreground">{language === 'ar' ? 'النقاط العامة' : 'Overall Score'}</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">{evaluationSummary.avgScores.feasibility.toFixed(1)}</div>
+                  <div className="text-muted-foreground">{language === 'ar' ? 'الجدوى' : 'Feasibility'}</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">{evaluationSummary.avgScores.impact.toFixed(1)}</div>
+                  <div className="text-muted-foreground">{language === 'ar' ? 'التأثير' : 'Impact'}</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">{evaluationSummary.avgScores.innovation.toFixed(1)}</div>
+                  <div className="text-muted-foreground">{language === 'ar' ? 'الابتكار' : 'Innovation'}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Evaluator Status */}
+            <div className="space-y-2">
+              <h5 className="font-medium text-sm">{language === 'ar' ? 'حالة المقيمين' : 'Evaluator Status'}</h5>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {evaluationSummary.evaluations.map((eval: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-background rounded text-xs">
+                    <span className="font-medium">{eval.type}</span>
+                    <Badge variant={eval.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                      {eval.status === 'completed' ? 
+                        `${eval.score}/10` : 
+                        (language === 'ar' ? 'في الانتظار' : 'Pending')
+                      }
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Decision Type Selection */}
         <div className="space-y-3">
           <label className="text-sm font-medium">{t("decision_panel")}</label>

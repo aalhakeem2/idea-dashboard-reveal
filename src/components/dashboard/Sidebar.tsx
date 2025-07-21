@@ -1,212 +1,105 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Lightbulb, 
-  ClipboardCheck, 
-  Users, 
-  BarChart3, 
-  Settings,
-  FileText,
-  UserCheck,
-  Target,
-  Activity,
-  Sparkles
-} from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-
-type Profile = Tables<"profiles">;
+import { 
+  Home, 
+  Lightbulb, 
+  FileCheck, 
+  Users, 
+  Settings, 
+  ClipboardList,
+  UserCheck,
+  BarChart3,
+  Clock,
+  CheckCircle2,
+  Target,
+  Shield,
+  Activity
+} from "lucide-react";
 
 interface SidebarProps {
-  profile: Profile;
-  activeView: string;
+  role: string;
   onViewChange: (view: string) => void;
+  activeView: string;
 }
 
-export const Sidebar = ({ profile, activeView, onViewChange }: SidebarProps) => {
+const Sidebar: React.FC<SidebarProps> = ({ role, onViewChange, activeView }) => {
   const { language } = useLanguage();
-  const [collapsed, setCollapsed] = useState(false);
+
+  const submitterItems = [
+    { key: "dashboard", icon: Home, label: language === 'ar' ? 'الرئيسية' : 'Dashboard' },
+    { key: "submit", icon: Lightbulb, label: language === 'ar' ? 'إرسال فكرة' : 'Submit Idea' },
+    { key: "my-ideas", icon: FileCheck, label: language === 'ar' ? 'أفكاري' : 'My Ideas' },
+    { key: "drafts", icon: ClipboardList, label: language === 'ar' ? 'المسودات' : 'Drafts' },
+  ];
+
+  const evaluatorItems = [
+    { key: "dashboard", icon: Home, label: language === 'ar' ? 'الرئيسية' : 'Dashboard' },
+    { key: "evaluations", icon: FileCheck, label: language === 'ar' ? 'التقييمات' : 'Evaluations' },
+    { key: "completed", icon: CheckCircle2, label: language === 'ar' ? 'المكتملة' : 'Completed' },
+    { key: "analytics", icon: BarChart3, label: language === 'ar' ? 'التحليلات' : 'Analytics' },
+  ];
+
+  const managementItems = [
+    { key: "dashboard", icon: Home, label: language === 'ar' ? 'الرئيسية' : 'Dashboard' },
+    { key: "evaluation-management", icon: Activity, label: language === 'ar' ? 'إدارة التقييمات' : 'Evaluation Management' },
+    { key: "evaluation-queue", icon: Clock, label: language === 'ar' ? 'طابور التقييم' : 'Evaluation Queue' },
+    { key: "assign-evaluators", icon: UserCheck, label: language === 'ar' ? 'تعيين المقيمين' : 'Assign Evaluators' },
+    { key: "decisions", icon: Target, label: language === 'ar' ? 'القرارات' : 'Decisions' },
+    { key: "ideas", icon: Lightbulb, label: language === 'ar' ? 'جميع الأفكار' : 'All Ideas' },
+    { key: "analytics", icon: BarChart3, label: language === 'ar' ? 'التحليلات' : 'Analytics' },
+    { key: "evaluator-management", icon: Shield, label: language === 'ar' ? 'إدارة المقيمين' : 'Evaluator Management' },
+    { key: "evaluator-pool", icon: Users, label: language === 'ar' ? 'مجموعة المقيمين' : 'Evaluator Pool' },
+    { key: "users", icon: Users, label: language === 'ar' ? 'المستخدمون' : 'Users' },
+    { key: "settings", icon: Settings, label: language === 'ar' ? 'الإعدادات' : 'Settings' },
+  ];
 
   const getMenuItems = () => {
-    const baseItems = [
-      {
-        id: "dashboard",
-        label: language === "ar" ? "لوحة التحكم" : "Dashboard",
-        icon: LayoutDashboard,
-      },
-    ];
-
-    switch (profile.role) {
-      case "submitter":
-        return [
-          ...baseItems,
-          {
-            id: "submit-idea",
-            label: language === "ar" ? "إرسال فكرة" : "Submit Idea",
-            icon: Lightbulb,
-          },
-          {
-            id: "my-ideas",
-            label: language === "ar" ? "أفكاري" : "My Ideas",
-            icon: FileText,
-          },
-          {
-            id: "ideas",
-            label: language === "ar" ? "جميع الأفكار" : "All Ideas",
-            icon: Lightbulb,
-          },
-        ];
-
-      case "evaluator":
-        return [
-          ...baseItems,
-          {
-            id: "evaluations",
-            label: language === "ar" ? "التقييمات" : "Evaluations",
-            icon: ClipboardCheck,
-          },
-          {
-            id: "assigned-ideas",
-            label: language === "ar" ? "الأفكار المُكلفة" : "Assigned Ideas",
-            icon: Target,
-          },
-          {
-            id: "ideas",
-            label: language === "ar" ? "جميع الأفكار" : "All Ideas",
-            icon: Lightbulb,
-          },
-          {
-            id: "analytics",
-            label: language === "ar" ? "التحليلات" : "Analytics",
-            icon: BarChart3,
-          },
-        ];
-
-      case "management":
-        return [
-          ...baseItems,
-          {
-            id: "evaluation-queue",
-            label: language === "ar" ? "طابور التقييم" : "Evaluation Queue",
-            icon: Activity,
-          },
-          {
-            id: "assign-evaluators",
-            label: language === "ar" ? "تعيين المقيمين" : "Assign Evaluators",
-            icon: UserCheck,
-          },
-          {
-            id: "decisions",
-            label: language === "ar" ? "القرارات" : "Decisions",
-            icon: Sparkles,
-          },
-          {
-            id: "analytics",
-            label: language === "ar" ? "التحليلات" : "Analytics",
-            icon: BarChart3,
-          },
-          {
-            id: "ideas",
-            label: language === "ar" ? "جميع الأفكار" : "All Ideas",
-            icon: Lightbulb,
-          },
-          {
-            id: "evaluator-management",
-            label: language === "ar" ? "إدارة المقيمين" : "Evaluator Management",
-            icon: UserCheck,
-          },
-          {
-            id: "evaluator-pool",
-            label: language === "ar" ? "مجموعة المقيمين" : "Evaluator Pool",
-            icon: Users,
-          },
-          {
-            id: "users",
-            label: language === "ar" ? "إدارة المستخدمين" : "User Management",
-            icon: Users,
-          },
-          {
-            id: "settings",
-            label: language === "ar" ? "الإعدادات" : "Settings",
-            icon: Settings,
-          },
-        ];
-
+    switch (role) {
+      case 'submitter':
+        return submitterItems;
+      case 'evaluator':
+        return evaluatorItems;
+      case 'management':
+        return managementItems;
       default:
-        return baseItems;
+        return submitterItems;
     }
   };
 
   const menuItems = getMenuItems();
 
-  const handleItemClick = (itemId: string) => {
-    console.log("Sidebar: Clicking item", itemId, "Current active:", activeView);
-    onViewChange(itemId);
-  };
-
   return (
-    <div className={`bg-white border-r border-gray-200 transition-all duration-300 shadow-sm ${collapsed ? 'w-16' : 'w-64'}`}>
+    <div className={`bg-white border-r border-border h-full ${language === 'ar' ? 'text-right' : 'text-left'}`}>
       <div className="p-4">
-        <div className="flex items-center justify-between mb-8">
-          {!collapsed && (
-            <h2 className="text-xl font-bold text-gray-800" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-              {language === "ar" ? "نظام الأفكار" : "Ideas System"}
-            </h2>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-          </Button>
-        </div>
-
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {language === 'ar' ? 'نظام الأفكار' : 'Ideas System'}
+        </h2>
+        
         <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeView === item.id;
-            
-            return (
-              <Button
-                key={item.id}
-                variant={isActive ? "default" : "ghost"}
-                className={`w-full justify-start transition-all duration-200 ${
-                  language === 'ar' ? 'flex-row-reverse' : ''
-                } ${collapsed ? 'px-2' : 'px-4'} ${
-                  isActive 
-                    ? 'bg-you-accent text-white shadow-md hover:bg-you-accent/90' 
-                    : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
-                } ${!collapsed ? 'h-12' : 'h-10'}`}
-                onClick={() => handleItemClick(item.id)}
-                dir={language === 'ar' ? 'rtl' : 'ltr'}
-              >
-                <Icon className={`h-5 w-5 ${collapsed ? '' : (language === 'ar' ? 'ml-3' : 'mr-3')} ${
-                  isActive ? 'text-white' : 'text-gray-500'
-                }`} />
-                {!collapsed && <span className="font-medium">{item.label}</span>}
-              </Button>
-            );
-          })}
+          {menuItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => onViewChange(item.key)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                "hover:bg-gray-100 hover:text-gray-900",
+                activeView === item.key
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-gray-700",
+                language === 'ar' ? 'flex-row-reverse' : 'flex-row'
+              )}
+            >
+              <item.icon className="h-4 w-4 flex-shrink-0" />
+              <span>{item.label}</span>
+            </button>
+          ))}
         </nav>
-
-        {/* Role Badge */}
-        {!collapsed && (
-          <div className="mt-8 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-            <div className="text-xs text-gray-500 mb-2 font-medium" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-              {language === "ar" ? "الدور الحالي" : "Current Role"}
-            </div>
-            <div className="font-semibold text-sm capitalize text-gray-800" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-              {profile.role === "management" && (language === "ar" ? "إدارة" : "Management")}
-              {profile.role === "evaluator" && (language === "ar" ? "مقيم" : "Evaluator")}
-              {profile.role === "submitter" && (language === "ar" ? "مقدم أفكار" : "Submitter")}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 };
+
+export default Sidebar;
