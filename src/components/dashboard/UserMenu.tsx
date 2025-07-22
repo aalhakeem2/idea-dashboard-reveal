@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, User, Loader2 } from "lucide-react";
+import { LogOut, Settings, User, Loader2, ChevronRight } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ interface UserMenuProps {
 export const UserMenu = ({ profile }: UserMenuProps) => {
   const { language, isRTL } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
@@ -68,6 +70,10 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
       
       setIsLoggingOut(false);
     }
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
   };
 
   const getInitials = (name: string) => {
@@ -121,35 +127,57 @@ export const UserMenu = ({ profile }: UserMenuProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className={`w-56 ${isRTL ? 'text-right' : 'text-left'} bg-white shadow-xl border border-gray-200 rounded-lg`} 
+        className={`w-64 ${isRTL ? 'text-right' : 'text-left'} bg-white shadow-xl border border-gray-200 rounded-lg`} 
         align={isRTL ? "start" : "end"}
         sideOffset={8}
       >
-        <div className="flex items-center justify-start space-x-2 p-3 bg-gray-50 rounded-t-lg">
-          <Avatar className={`h-10 w-10 ${getRoleColor(profile.role || 'submitter')} ring-2 ring-white`}>
+        <div className="flex items-center justify-start space-x-2 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-t-lg">
+          <Avatar className={`h-12 w-12 ${getRoleColor(profile.role || 'submitter')} ring-2 ring-white shadow-md`}>
             <AvatarFallback className="text-white text-sm font-semibold">
               {getInitials(profile.full_name || 'User')}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col space-y-1 leading-none">
-            <p className="font-semibold text-sm text-gray-900">{profile.full_name}</p>
-            <p className="text-xs text-gray-600 font-medium">
+          <div className="flex flex-col space-y-1 leading-none flex-1">
+            <p className="font-semibold text-base text-gray-900 truncate">{profile.full_name}</p>
+            <p className="text-sm text-gray-600 font-medium">
               {getRoleText(profile.role || 'submitter')}
             </p>
+            {profile.department && (
+              <p className="text-xs text-gray-500">{profile.department}</p>
+            )}
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className={`cursor-pointer hover:bg-gray-50 focus:bg-gray-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <User className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'} text-gray-500`} />
-          <span className="text-gray-700 font-medium">{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+        
+        {/* Enhanced Profile Menu Item */}
+        <DropdownMenuItem 
+          className={`cursor-pointer group relative overflow-hidden bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 focus:from-blue-100 focus:to-indigo-100 border-l-4 border-blue-500 px-4 py-3 transition-all duration-200 ${isRTL ? 'flex-row-reverse border-r-4 border-l-0' : ''}`}
+          onClick={handleProfileClick}
+        >
+          <div className={`flex items-center w-full ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`p-2 rounded-full bg-blue-500 text-white group-hover:bg-blue-600 transition-colors duration-200 ${isRTL ? 'ml-3' : 'mr-3'}`}>
+              <User className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <span className="text-gray-900 font-semibold text-sm block">
+                {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
+              </span>
+              <span className="text-gray-600 text-xs">
+                {language === 'ar' ? 'إدارة حسابك وإعداداتك' : 'Manage your account & settings'}
+              </span>
+            </div>
+            <ChevronRight className={`h-4 w-4 text-blue-500 group-hover:text-blue-600 transition-all duration-200 group-hover:translate-x-1 ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
         </DropdownMenuItem>
-        <DropdownMenuItem className={`cursor-pointer hover:bg-gray-50 focus:bg-gray-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        
+        <DropdownMenuItem className={`cursor-pointer hover:bg-gray-50 focus:bg-gray-50 px-4 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Settings className={`h-4 w-4 ${isRTL ? 'ml-3' : 'mr-3'} text-gray-500`} />
           <span className="text-gray-700 font-medium">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
-          className={`cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 px-3 py-2 ${isRTL ? 'flex-row-reverse' : ''} ${isLoggingOut ? 'opacity-50' : ''}`}
+          className={`cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 px-4 py-2 ${isRTL ? 'flex-row-reverse' : ''} ${isLoggingOut ? 'opacity-50' : ''}`}
           onClick={handleLogout}
           disabled={isLoggingOut}
         >
