@@ -438,6 +438,7 @@ export type Database = {
           is_active: boolean | null
           last_login: string | null
           password_reset_required: boolean | null
+          profile_picture_url: string | null
           role: Database["public"]["Enums"]["user_role"]
           specialization:
             | Database["public"]["Enums"]["evaluation_type"][]
@@ -458,6 +459,7 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password_reset_required?: boolean | null
+          profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           specialization?:
             | Database["public"]["Enums"]["evaluation_type"][]
@@ -478,6 +480,7 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password_reset_required?: boolean | null
+          profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           specialization?:
             | Database["public"]["Enums"]["evaluation_type"][]
