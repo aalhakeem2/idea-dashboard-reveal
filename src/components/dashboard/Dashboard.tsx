@@ -164,21 +164,6 @@ export const Dashboard = ({ user }: DashboardProps) => {
                 </div>
               )}
             </div>
-            
-            <Button
-              onClick={handleForceSeed}
-              disabled={seeding}
-              variant="outline"
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              {seeding ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Database className="h-4 w-4" />
-              )}
-              <span>{seeding ? t('dashboard', 'seeding') : t('dashboard', 'seed_sample_data')}</span>
-            </Button>
           </div>
           
           {renderDashboard()}
