@@ -11,7 +11,9 @@ import { IdeaCard } from "./IdeaCard";
 import { DraftManagement } from "./DraftManagement";
 import { IdeaTimeline } from "./IdeaTimeline";
 import { IdeaActionLog } from "./IdeaActionLog";
+import { AdvancedSearchFilter } from "./AdvancedSearchFilter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSearchFilter } from "@/contexts/SearchFilterContext";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
@@ -31,6 +33,7 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
   const [statusLogs, setStatusLogs] = useState([]);
   const [actionLogs, setActionLogs] = useState([]);
   const { t, language } = useLanguage();
+  const { filteredData, setData, searchTerm, filters } = useSearchFilter();
 
   console.log("EnhancedSubmitterDashboard: activeView:", activeView);
 
@@ -137,6 +140,15 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
       fetchAllIdeas();
     }
   }, [profile.id, activeView]);
+
+  // Update search filter context when data changes
+  useEffect(() => {
+    if (activeView === 'ideas') {
+      setData(allIdeas);
+    } else {
+      setData(ideas);
+    }
+  }, [ideas, allIdeas, activeView, setData]);
 
   useEffect(() => {
     if (selectedIdea) {
@@ -347,136 +359,162 @@ export const EnhancedSubmitterDashboard: React.FC<EnhancedSubmitterDashboardProp
     </div>
   );
 
-  const renderAllIdeasView = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">
-          {language === 'ar' ? 'جميع الأفكار' : 'All Ideas'}
-        </h1>
-        <p className="text-muted-foreground">
-          {language === 'ar' ? 'تصفح جميع الأفكار المُرسلة في النظام' : 'Browse all submitted ideas in the system'}
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-8">
-          {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-        </div>
-      ) : allIdeas.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p>{language === 'ar' ? 'لا توجد أفكار متاحة' : 'No ideas available'}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {allIdeas.map((idea) => (
-            <IdeaCard 
-              key={idea.id} 
-              idea={idea} 
-              detailed 
-              showTimeline={true}
-              onViewActivity={() => setSelectedIdea(idea)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderMyIdeasView = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+  const renderAllIdeasView = () => {
+    const displayData = activeView === 'ideas' ? filteredData : allIdeas;
+    
+    return (
+      <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">
-            {language === 'ar' ? 'أفكاري' : 'My Ideas'}
+            {language === 'ar' ? 'جميع الأفكار' : 'All Ideas'}
           </h1>
           <p className="text-muted-foreground">
-            {language === 'ar' ? 'إدارة جميع أفكاري المُرسلة والمسودات' : 'Manage all my submitted ideas and drafts'}
+            {language === 'ar' ? 'تصفح جميع الأفكار المُرسلة في النظام' : 'Browse all submitted ideas in the system'}
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          {language === 'ar' ? 'فكرة جديدة' : 'New Idea'}
-        </Button>
+
+        {/* Search and Filter */}
+        <AdvancedSearchFilter
+          onFiltersChange={() => {}} // Handled by context
+          onSearch={() => {}} // Handled by context
+          placeholder={language === 'ar' ? 'البحث في الأفكار...' : 'Search ideas...'}
+        />
+
+        {loading ? (
+          <div className="text-center py-8">
+            {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+          </div>
+        ) : displayData.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <p>{searchTerm || Object.values(filters).some(f => f && f.length > 0) 
+                ? (language === 'ar' ? 'لا توجد نتائج' : 'No results found')
+                : (language === 'ar' ? 'لا توجد أفكار متاحة' : 'No ideas available')}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {displayData.map((idea) => (
+              <IdeaCard 
+                key={idea.id} 
+                idea={idea} 
+                detailed 
+                showTimeline={true}
+                onViewActivity={() => setSelectedIdea(idea)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+    );
+  };
 
-      <Tabs defaultValue="submitted" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="submitted" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            {language === 'ar' ? 'المُرسلة' : 'Submitted'}
-          </TabsTrigger>
-          <TabsTrigger value="drafts" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            {language === 'ar' ? 'المسودات' : 'Drafts'}
-            {draftCount > 0 && <Badge variant="secondary">{draftCount}</Badge>}
-          </TabsTrigger>
-        </TabsList>
+  const renderMyIdeasView = () => {
+    const displayData = activeView === 'my-ideas' ? filteredData : submittedIdeas;
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">
+              {language === 'ar' ? 'أفكاري' : 'My Ideas'}
+            </h1>
+            <p className="text-muted-foreground">
+              {language === 'ar' ? 'إدارة جميع أفكاري المُرسلة والمسودات' : 'Manage all my submitted ideas and drafts'}
+            </p>
+          </div>
+          <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            {language === 'ar' ? 'فكرة جديدة' : 'New Idea'}
+          </Button>
+        </div>
 
-        <TabsContent value="submitted" className="space-y-6">
-          {loading ? (
-            <div className="text-center py-8">
-              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-            </div>
-          ) : submittedIdeas.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>{language === 'ar' ? 'لا توجد أفكار مُرسلة' : 'No submitted ideas yet'}</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {submittedIdeas.map((idea) => (
-                <IdeaCard 
-                  key={idea.id} 
-                  idea={idea} 
-                  detailed 
-                  showTimeline={true}
-                  onViewActivity={(idea) => setSelectedIdea(idea)}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+        <Tabs defaultValue="submitted" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="submitted" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              {language === 'ar' ? 'المُرسلة' : 'Submitted'}
+            </TabsTrigger>
+            <TabsTrigger value="drafts" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {language === 'ar' ? 'المسودات' : 'Drafts'}
+              {draftCount > 0 && <Badge variant="secondary">{draftCount}</Badge>}
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="drafts">
-          <DraftManagement 
-            userId={profile.id} 
-            onEditDraft={handleEditDraft}
-            onRefresh={fetchIdeas}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="submitted" className="space-y-6">
+            {/* Search and Filter for My Ideas */}
+            <AdvancedSearchFilter
+              onFiltersChange={() => {}} // Handled by context
+              onSearch={() => {}} // Handled by context
+              placeholder={language === 'ar' ? 'البحث في أفكاري...' : 'Search my ideas...'}
+            />
 
-      {/* Activity Timeline for Selected Idea */}
-      {selectedIdea && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                {language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:'} {selectedIdea.title}
-              </CardTitle>
-              <Button 
-                variant="outline" 
-                onClick={() => setSelectedIdea(null)}
-              >
-                {language === 'ar' ? 'إغلاق' : 'Close'}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <IdeaTimeline statusLogs={statusLogs} currentStatus={selectedIdea.status} />
-              <IdeaActionLog actionLogs={actionLogs} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+            {loading ? (
+              <div className="text-center py-8">
+                {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+              </div>
+            ) : displayData.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>{searchTerm || Object.values(filters).some(f => f && f.length > 0) 
+                    ? (language === 'ar' ? 'لا توجد نتائج' : 'No results found')
+                    : (language === 'ar' ? 'لا توجد أفكار مُرسلة' : 'No submitted ideas yet')}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {displayData.map((idea) => (
+                  <IdeaCard 
+                    key={idea.id} 
+                    idea={idea} 
+                    detailed 
+                    showTimeline={true}
+                    onViewActivity={(idea) => setSelectedIdea(idea)}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="drafts">
+            <DraftManagement 
+              userId={profile.id} 
+              onEditDraft={handleEditDraft}
+              onRefresh={fetchIdeas}
+            />
+          </TabsContent>
+        </Tabs>
+
+        {/* Activity Timeline for Selected Idea */}
+        {selectedIdea && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  {language === 'ar' ? 'سجل النشاط للفكرة:' : 'Activity Log for Idea:'} {selectedIdea.title}
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSelectedIdea(null)}
+                >
+                  {language === 'ar' ? 'إغلاق' : 'Close'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <IdeaTimeline statusLogs={statusLogs} currentStatus={selectedIdea.status} />
+                <IdeaActionLog actionLogs={actionLogs} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
 
   return renderContent();
 };

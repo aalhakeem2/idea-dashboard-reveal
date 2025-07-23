@@ -16,6 +16,7 @@ import { seedSampleData, forceSeedSampleData } from "@/utils/sampleDataSeeder";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Database, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { SearchFilterProvider } from "@/contexts/SearchFilterContext";
 
 type Profile = Tables<"profiles">;
 
@@ -145,30 +146,32 @@ export const Dashboard = ({ user }: DashboardProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar 
-        role={profile.role} 
-        activeView={activeView} 
-        onViewChange={setActiveView} 
-      />
-      <div className="flex-1 flex flex-col">
-        <Header profile={profile} />
-        <main className="flex-1 p-6">
-          {/* Enhanced Controls */}
-          <div className="mb-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              {profile.role === "management" && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span>Enhanced Management Dashboard</span>
-                </div>
-              )}
+    <SearchFilterProvider>
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar 
+          role={profile.role} 
+          activeView={activeView} 
+          onViewChange={setActiveView} 
+        />
+        <div className="flex-1 flex flex-col">
+          <Header profile={profile} />
+          <main className="flex-1 p-6">
+            {/* Enhanced Controls */}
+            <div className="mb-4 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                {profile.role === "management" && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span>Enhanced Management Dashboard</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          
-          {renderDashboard()}
-        </main>
+            
+            {renderDashboard()}
+          </main>
+        </div>
       </div>
-    </div>
+    </SearchFilterProvider>
   );
 };
