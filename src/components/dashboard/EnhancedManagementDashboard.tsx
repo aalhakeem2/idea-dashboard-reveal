@@ -29,6 +29,7 @@ import { EvaluatorManagementView } from "./views/EvaluatorManagementView";
 import { EvaluatorPoolView } from "./views/EvaluatorPoolView";
 import { EvaluatorAssignmentDashboard } from "./EvaluatorAssignmentDashboard";
 import { EvaluationManagementView } from "./EvaluationManagementView";
+import { EnhancedAnalyticsDashboard } from "./analytics/EnhancedAnalyticsDashboard";
 
 interface EnhancedManagementDashboardProps {
   ideas: any[];
@@ -152,7 +153,7 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
       case "decisions":
         return renderDecisionsView();
       case "analytics":
-        return renderAnalyticsView();
+        return <EnhancedAnalyticsDashboard profile={profile} />;
       case "ideas":
         return renderAllIdeasView();
       case "evaluator-management":
