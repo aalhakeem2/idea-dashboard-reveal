@@ -128,10 +128,50 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
     }
   };
 
-  const evaluatedIdeas = ideas.filter(idea => 
-    idea.status === 'evaluated' || 
-    (idea.average_evaluation_score && idea.average_evaluation_score > 0)
-  );
+  // Helper function to check if idea has management decision
+  const hasManagementDecision = async (ideaId: string): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from('idea_action_log')
+      .select('id')
+      .eq('idea_id', ideaId)
+      .eq('action_type', 'management_decision')
+      .limit(1);
+    
+    return !error && data && data.length > 0;
+  };
+
+  // Ideas that have completed evaluations but no management decision yet
+  const [pendingDecisionIdeas, setPendingDecisionIdeas] = useState<any[]>([]);
+  const [decidedIdeas, setDecidedIdeas] = useState<any[]>([]);
+
+  // Check which ideas need decisions vs those already decided
+  useEffect(() => {
+    const checkDecisionStatus = async () => {
+      const evaluatedIdeas = ideas.filter(idea => 
+        (idea.status === 'under_review' && idea.average_evaluation_score && idea.average_evaluation_score > 0) ||
+        idea.status === 'evaluated'
+      );
+
+      const pending: any[] = [];
+      const decided: any[] = [];
+
+      for (const idea of evaluatedIdeas) {
+        const hasDecision = await hasManagementDecision(idea.id);
+        if (hasDecision || idea.status === 'approved' || idea.status === 'rejected') {
+          decided.push(idea);
+        } else {
+          pending.push(idea);
+        }
+      }
+
+      setPendingDecisionIdeas(pending);
+      setDecidedIdeas(decided);
+    };
+
+    if (ideas.length > 0) {
+      checkDecisionStatus();
+    }
+  }, [ideas]);
 
   const pendingIdeas = ideas.filter(idea => 
     idea.status === 'under_review' || idea.status === 'submitted'
@@ -317,78 +357,163 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ideas Ready for Decision */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <FileCheck className="h-5 w-5 text-green-500" />
-              {language === 'ar' ? 'جاهزة للقرار' : 'Ready for Decision'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {evaluatedIdeas.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileCheck className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg">{language === 'ar' ? 'لا توجد أفكار جاهزة للقرار' : 'No ideas ready for decision'}</p>
-                </div>
-              ) : (
-                evaluatedIdeas.map((idea) => (
-                  <div
-                    key={idea.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                      selectedIdea?.id === idea.id 
-                        ? 'border-primary bg-primary/5 shadow-md' 
-                        : 'border-border hover:bg-muted/50 hover:shadow-sm'
-                    }`}
-                    onClick={() => setSelectedIdea(idea)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h5 className="font-semibold text-gray-900">{idea.title}</h5>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="text-xs">{idea.idea_reference_code}</Badge>
-                          {idea.average_evaluation_score && (
-                            <Badge variant="secondary" className="text-xs">
-                              {idea.average_evaluation_score.toFixed(1)}/10
-                            </Badge>
-                          )}
+      <Tabs defaultValue="pending" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="pending" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            {language === 'ar' ? 'في انتظار القرار' : 'Pending Decisions'}
+            {pendingDecisionIdeas.length > 0 && <Badge variant="secondary">{pendingDecisionIdeas.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="decided" className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            {language === 'ar' ? 'القرارات المتخذة' : 'Decision History'}
+            {decidedIdeas.length > 0 && <Badge variant="outline">{decidedIdeas.length}</Badge>}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Ideas Ready for Decision */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <FileCheck className="h-5 w-5 text-orange-500" />
+                  {language === 'ar' ? 'جاهزة للقرار' : 'Ready for Decision'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {pendingDecisionIdeas.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <FileCheck className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg">{language === 'ar' ? 'لا توجد أفكار في انتظار القرار' : 'No ideas awaiting decision'}</p>
+                      <p className="text-sm mt-2">{language === 'ar' ? 'جميع الأفكار المقيمة تم اتخاذ قرار بشأنها' : 'All evaluated ideas have been decided'}</p>
+                    </div>
+                  ) : (
+                    pendingDecisionIdeas.map((idea) => (
+                      <div
+                        key={idea.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          selectedIdea?.id === idea.id 
+                            ? 'border-primary bg-primary/5 shadow-md' 
+                            : 'border-border hover:bg-muted/50 hover:shadow-sm'
+                        }`}
+                        onClick={() => setSelectedIdea(idea)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-semibold text-gray-900">{idea.title}</h5>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs">{idea.idea_reference_code}</Badge>
+                              {idea.average_evaluation_score && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {idea.average_evaluation_score.toFixed(1)}/10
+                                </Badge>
+                              )}
+                              <Badge className="text-xs bg-blue-100 text-blue-800">
+                                {language === 'ar' ? '🧩 مُقيمة - في انتظار القرار' : '🧩 Evaluated - Awaiting Decision'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline" className="hover:bg-primary hover:text-white">
+                            {language === 'ar' ? 'اتخاذ قرار' : 'Decide'}
+                          </Button>
                         </div>
                       </div>
-                      <Button size="sm" variant="outline" className="hover:bg-primary hover:text-white">
-                        {language === 'ar' ? 'اتخاذ قرار' : 'Decide'}
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Decision Panel */}
-        {selectedIdea && (
-          <div className="space-y-4">
-            <ManagementDecisionPanel
-              ideaId={selectedIdea.id}
-              ideaTitle={selectedIdea.title}
-              currentStatus={selectedIdea.status}
-              onDecisionMade={() => {
-                onIdeaUpdated();
-                setSelectedIdea(null);
-              }}
-            />
-            
-            <RevisionWorkflowSimple
-              ideaId={selectedIdea.id}
-              ideaTitle={selectedIdea.title}
-              isSubmitter={false}
-              onRevisionUpdated={onIdeaUpdated}
-            />
+            {/* Decision Panel */}
+            {selectedIdea && pendingDecisionIdeas.find(idea => idea.id === selectedIdea.id) && (
+              <div className="space-y-4">
+                <ManagementDecisionPanel
+                  ideaId={selectedIdea.id}
+                  ideaTitle={selectedIdea.title}
+                  currentStatus={selectedIdea.status}
+                  onDecisionMade={() => {
+                    onIdeaUpdated();
+                    setSelectedIdea(null);
+                  }}
+                />
+                
+                <RevisionWorkflowSimple
+                  ideaId={selectedIdea.id}
+                  ideaTitle={selectedIdea.title}
+                  isSubmitter={false}
+                  onRevisionUpdated={onIdeaUpdated}
+                />
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="decided" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <Activity className="h-5 w-5 text-green-500" />
+                {language === 'ar' ? 'سجل القرارات' : 'Decision History'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {decidedIdeas.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Activity className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg">{language === 'ar' ? 'لا توجد قرارات متخذة بعد' : 'No decisions made yet'}</p>
+                  </div>
+                ) : (
+                  decidedIdeas.map((idea) => (
+                    <div
+                      key={idea.id}
+                      className="p-4 border rounded-lg bg-muted/20"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h5 className="font-semibold text-gray-900">{idea.title}</h5>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline" className="text-xs">{idea.idea_reference_code}</Badge>
+                            {idea.average_evaluation_score && (
+                              <Badge variant="secondary" className="text-xs">
+                                {idea.average_evaluation_score.toFixed(1)}/10
+                              </Badge>
+                            )}
+                            <Badge className={`text-xs ${
+                              idea.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              idea.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {idea.status === 'approved' ? (language === 'ar' ? '🟢 موافق عليه' : '🟢 Approved') :
+                               idea.status === 'rejected' ? (language === 'ar' ? '🔴 مرفوض' : '🔴 Rejected') :
+                               (language === 'ar' ? '⚠️ موافقة مشروطة' : '⚠️ Conditional')}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {language === 'ar' ? 'تم اتخاذ القرار في:' : 'Decision made on:'} {
+                              idea.updated_at ? new Date(idea.updated_at).toLocaleDateString() : 'N/A'
+                            }
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setSelectedIdea(idea)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 

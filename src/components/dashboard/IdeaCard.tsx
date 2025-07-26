@@ -7,6 +7,8 @@ import { Calendar, User, DollarSign, Star, FileText, TrendingUp, Clock, Activity
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslations } from "@/hooks/useTranslations";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 
 type Idea = Tables<"ideas">;
 
@@ -48,6 +50,32 @@ export const IdeaCard = ({ idea, detailed = false, showTimeline = false, onViewA
     }
   };
 
+  // Helper function to determine enhanced status label
+  const getEnhancedStatusLabel = async (idea: Idea) => {
+    // Check if idea has management decision
+    if (idea.status === 'approved' || idea.status === 'rejected') {
+      return getStatusLabel(idea.status);
+    }
+
+    // Check if idea is evaluated but awaiting management decision
+    if (idea.status === 'under_review' && 
+        idea.average_evaluation_score && idea.average_evaluation_score > 0) {
+      
+      const { data } = await supabase
+        .from('idea_action_log')
+        .select('id')
+        .eq('idea_id', idea.id)
+        .eq('action_type', 'management_decision')
+        .limit(1);
+
+      if (!data || data.length === 0) {
+        return language === 'ar' ? '🧩 مُقيمة - في انتظار قرار الإدارة' : '🧩 Evaluated - Awaiting Management Decision';
+      }
+    }
+
+    return getStatusLabel(idea.status);
+  };
+
   const getStatusLabel = (status: string) => {
     const statusLabels = {
       draft: { en: "📝 Draft", ar: "📝 مسودة" },
@@ -65,6 +93,17 @@ export const IdeaCard = ({ idea, detailed = false, showTimeline = false, onViewA
     };
     return statusLabels[status as keyof typeof statusLabels]?.[language] || status;
   };
+
+  // State for enhanced status
+  const [enhancedStatus, setEnhancedStatus] = useState<string>('');
+
+  useEffect(() => {
+    const updateStatus = async () => {
+      const status = await getEnhancedStatusLabel(idea);
+      setEnhancedStatus(status);
+    };
+    updateStatus();
+  }, [idea, language]);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -111,7 +150,7 @@ export const IdeaCard = ({ idea, detailed = false, showTimeline = false, onViewA
           </div>
           <div className="flex flex-col gap-2 items-end">
             <Badge className={getStatusColor(idea.status)} variant="outline">
-              {getStatusLabel(idea.status)}
+              {enhancedStatus || getStatusLabel(idea.status)}
             </Badge>
             {idea.average_evaluation_score && idea.average_evaluation_score > 0 && (
               <div className="flex items-center gap-1 text-sm font-medium">

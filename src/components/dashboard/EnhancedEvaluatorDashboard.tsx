@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardCheck, Eye, Star, Clock, CheckCircle, BarChart3, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { IdeaCard } from "./IdeaCard";
 import { EvaluationForm } from "./EvaluationForm";
@@ -56,10 +57,15 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
       console.log("Evaluator Dashboard: Found assignments:", assignmentsData?.length || 0, assignmentsData);
       setAssignments(assignmentsData || []);
 
-      // Extract unique ideas from assignments
+      // Extract unique ideas from assignments - including all statuses for history
       const assignedIdeas = assignmentsData
         ?.map(assignment => assignment.ideas)
-        .filter(idea => idea && (idea.status === "submitted" || idea.status === "under_review"))
+        .filter(idea => idea && (
+          idea.status === "submitted" || 
+          idea.status === "under_review" || 
+          idea.status === "approved" ||
+          idea.status === "rejected"
+        ))
         || [];
       
       console.log("Evaluator Dashboard: Found assigned ideas:", assignedIdeas.length, assignedIdeas);
@@ -324,70 +330,149 @@ export const EnhancedEvaluatorDashboard = ({ profile, activeView }: EnhancedEval
   );
 
   const renderPendingEvaluationsView = () => {
-    const pendingIdeas = ideas.filter(idea => !isIdeaEvaluated(idea.id));
+    const pendingIdeas = ideas.filter(idea => 
+      !isIdeaEvaluated(idea.id) && 
+      (idea.status === "submitted" || idea.status === "under_review")
+    );
+    const awaitingDecisionIdeas = ideas.filter(idea => 
+      isIdeaEvaluated(idea.id) && 
+      idea.status === "under_review"
+    );
 
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">{language === 'ar' ? 'التقييمات المعلقة' : 'Pending Evaluations'}</h1>
-          <p className="text-muted-foreground">{language === 'ar' ? 'الأفكار في انتظار التقييم' : 'Ideas awaiting evaluation'}</p>
+          <h1 className="text-3xl font-bold">{language === 'ar' ? 'التقييمات' : 'Evaluations'}</h1>
+          <p className="text-muted-foreground">{language === 'ar' ? 'إدارة التقييمات والأفكار المُعينة' : 'Manage evaluations and assigned ideas'}</p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-8">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>
-        ) : pendingIdeas.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <ClipboardCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium mb-2">{language === 'ar' ? 'لا توجد تقييمات معلقة' : 'No pending evaluations'}</p>
-              <p className="text-muted-foreground">{language === 'ar' ? 'كل شيء مكتمل!' : 'All caught up!'}</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {pendingIdeas.map((idea) => (
-              <Card key={idea.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold">{idea.title}</h3>
-                        {idea.idea_reference_code && (
-                          <Badge variant="outline" className="text-xs font-mono">
-                            {idea.idea_reference_code}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground mb-3 line-clamp-2">
-                        {idea.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <Badge variant="outline">
-                          {idea.category.replace('_', ' ')}
-                        </Badge>
-                        {idea.submitted_at && (
-                          <span>
-                            {language === 'ar' ? 'تم الإرسال في:' : 'Submitted at:'} {new Date(idea.submitted_at).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={() => handleEvaluateIdea(idea)} className="gap-2">
-                        <ClipboardCheck className="h-4 w-4" />
-                        {language === 'ar' ? 'تقييم' : 'Evaluate'}
-                      </Button>
-                      <Button variant="outline" size="sm" className="gap-2" onClick={() => handleViewDetails(idea)}>
-                        <Eye className="h-4 w-4" />
-                        {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
-                      </Button>
-                    </div>
-                  </div>
+        <Tabs defaultValue="pending" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pending" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              {language === 'ar' ? 'معلقة' : 'Pending'}
+              {pendingIdeas.length > 0 && <Badge variant="secondary">{pendingIdeas.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="awaiting-decision" className="flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              {language === 'ar' ? 'في انتظار القرار' : 'Awaiting Decision'}
+              {awaitingDecisionIdeas.length > 0 && <Badge variant="outline">{awaitingDecisionIdeas.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              {language === 'ar' ? 'مكتملة' : 'Completed'}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pending" className="space-y-4">
+            {loading ? (
+              <div className="text-center py-8">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>
+            ) : pendingIdeas.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <ClipboardCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium mb-2">{language === 'ar' ? 'لا توجد تقييمات معلقة' : 'No pending evaluations'}</p>
+                  <p className="text-muted-foreground">{language === 'ar' ? 'كل شيء مكتمل!' : 'All caught up!'}</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="space-y-4">
+                {pendingIdeas.map((idea) => (
+                  <Card key={idea.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-lg font-semibold">{idea.title}</h3>
+                            {idea.idea_reference_code && (
+                              <Badge variant="outline" className="text-xs font-mono">
+                                {idea.idea_reference_code}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-muted-foreground mb-3 line-clamp-2">
+                            {idea.description}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <Badge variant="outline">
+                              {idea.category.replace('_', ' ')}
+                            </Badge>
+                            {idea.submitted_at && (
+                              <span>
+                                {language === 'ar' ? 'تم الإرسال في:' : 'Submitted at:'} {new Date(idea.submitted_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={() => handleEvaluateIdea(idea)} className="gap-2">
+                            <ClipboardCheck className="h-4 w-4" />
+                            {language === 'ar' ? 'تقييم' : 'Evaluate'}
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => handleViewDetails(idea)}>
+                            <Eye className="h-4 w-4" />
+                            {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="awaiting-decision" className="space-y-4">
+            {awaitingDecisionIdeas.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium mb-2">{language === 'ar' ? 'لا توجد أفكار في انتظار القرار' : 'No ideas awaiting decision'}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {awaitingDecisionIdeas.map((idea) => (
+                  <IdeaCard 
+                    key={idea.id} 
+                    idea={idea} 
+                    detailed 
+                    showTimeline={true}
+                    onViewActivity={() => handleViewDetails(idea)}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="completed" className="space-y-4">
+            <div className="space-y-4">
+              {ideas.filter(idea => 
+                isIdeaEvaluated(idea.id) && 
+                (idea.status === "approved" || idea.status === "rejected")
+              ).map((idea) => (
+                <IdeaCard 
+                  key={idea.id} 
+                  idea={idea} 
+                  detailed 
+                  showTimeline={true}
+                  onViewActivity={() => handleViewDetails(idea)}
+                />
+              ))}
+              {ideas.filter(idea => 
+                isIdeaEvaluated(idea.id) && 
+                (idea.status === "approved" || idea.status === "rejected")
+              ).length === 0 && (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg font-medium mb-2">{language === 'ar' ? 'لا توجد أفكار مكتملة' : 'No completed ideas'}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   };
