@@ -3,65 +3,86 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+/* Import Google Fonts - World Class Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
 
-/* Definition of the design system with YOU Innovation Hub branding - White-based theme */
+/* World Class Design System - Modern & Minimalist · Warm & Approachable · Trustworthy */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Background & Surface Colors */
+    --background: 210 16% 98%; /* Gray-100 equivalent */
+    --foreground: 220 9% 12%; /* Gray-800 equivalent */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%; /* Pure white for cards */
+    --card-foreground: 220 9% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 9% 12%;
 
-    /* YOU Innovation Hub Primary Colors - White-based */
-    --primary: 220 13% 91%; /* Light gray as primary */
-    --primary-foreground: 222.2 84% 4.9%;
+    /* Brand Colors - Teal as Primary */
+    --primary: 173 80% 40%; /* Teal-500 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 16% 93%; /* Gray-200 */
+    --secondary-foreground: 220 9% 25%; /* Gray-700 */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 16% 93%; /* Gray-200 */
+    --muted-foreground: 220 9% 46%; /* Gray-500 */
 
-    --accent: 220 13% 91%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --accent: 45 93% 58%; /* Yellow-400 */
+    --accent-foreground: 220 9% 12%; /* Gray-800 */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 220 13% 91%;
+    /* Borders & Inputs */
+    --border: 210 16% 82%; /* Gray-300 */
+    --input: 210 16% 82%; /* Gray-300 */
+    --ring: 173 80% 40%; /* Teal-500 for focus rings */
 
-    --radius: 0.75rem;
+    /* Border Radius */
+    --radius: 0.5rem; /* 8px for cards/buttons */
+    --radius-sm: 0.25rem; /* 4px for inputs */
 
-    /* YOU Innovation Hub Sidebar Colors - White-based */
+    /* Gray Scale Tokens */
+    --gray-100: 210 16% 98%;
+    --gray-200: 210 16% 93%;
+    --gray-300: 210 16% 82%;
+    --gray-400: 220 9% 60%;
+    --gray-500: 220 9% 46%;
+    --gray-600: 220 9% 32%;
+    --gray-700: 220 9% 25%;
+    --gray-800: 220 9% 12%;
+
+    /* Brand Accent Colors */
+    --teal-500: 173 80% 40%;
+    --yellow-400: 45 93% 58%;
+
+    /* Spacing Scale (4px base, 8px grid) */
+    --spacing-1: 0.25rem; /* 4px */
+    --spacing-2: 0.5rem; /* 8px */
+    --spacing-3: 0.75rem; /* 12px */
+    --spacing-4: 1rem; /* 16px */
+    --spacing-6: 1.5rem; /* 24px */
+    --spacing-8: 2rem; /* 32px */
+    --spacing-12: 3rem; /* 48px */
+    --spacing-16: 4rem; /* 64px */
+
+    /* Shadows */
+    --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* YOU Innovation Hub Sidebar Colors */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-primary: 220 13% 91%;
-    --sidebar-primary-foreground: 222.2 84% 4.9%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 84% 4.9%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 220 13% 91%;
-
-    /* Custom YOU Innovation Hub Colors - Updated for white theme */
-    --you-purple: 262 83% 58%;
-    --you-purple-light: 262 83% 65%;
-    --you-purple-dark: 262 83% 50%;
-    --you-blue: 217 91% 60%;
-    --you-green: 142 76% 36%;
-    --you-orange: 25 95% 53%;
-    --you-red: 0 84% 60%;
-    --you-gray: 220 13% 91%;
-    --you-gray-dark: 220 13% 46%;
-    --you-accent: 220 13% 91%;
+    --sidebar-foreground: 220 9% 12%;
+    --sidebar-primary: 173 80% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 16% 93%;
+    --sidebar-accent-foreground: 220 9% 12%;
+    --sidebar-border: 210 16% 82%;
+    --sidebar-ring: 173 80% 40%;
   }
 
   .dark {
@@ -115,68 +136,151 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-weight: 600;
+  }
+
+  /* World Class Typography Scale */
+  h1 {
+    font-size: 2rem; /* 32px */
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  p, body {
+    font-size: 1rem; /* 16px */
+    font-weight: 400;
+    line-height: 1.5;
   }
 }
 
-/* YOU Innovation Hub Custom Utilities - Updated for white theme */
+/* World Class Design System Utilities */
 @layer utilities {
-  .text-you-purple {
-    color: hsl(var(--you-purple));
+  /* Gray Scale Utilities */
+  .text-gray-100 { color: hsl(var(--gray-100)); }
+  .text-gray-200 { color: hsl(var(--gray-200)); }
+  .text-gray-300 { color: hsl(var(--gray-300)); }
+  .text-gray-400 { color: hsl(var(--gray-400)); }
+  .text-gray-500 { color: hsl(var(--gray-500)); }
+  .text-gray-600 { color: hsl(var(--gray-600)); }
+  .text-gray-700 { color: hsl(var(--gray-700)); }
+  .text-gray-800 { color: hsl(var(--gray-800)); }
+
+  .bg-gray-100 { background-color: hsl(var(--gray-100)); }
+  .bg-gray-200 { background-color: hsl(var(--gray-200)); }
+  .bg-gray-300 { background-color: hsl(var(--gray-300)); }
+  .bg-gray-400 { background-color: hsl(var(--gray-400)); }
+  .bg-gray-500 { background-color: hsl(var(--gray-500)); }
+  .bg-gray-600 { background-color: hsl(var(--gray-600)); }
+  .bg-gray-700 { background-color: hsl(var(--gray-700)); }
+  .bg-gray-800 { background-color: hsl(var(--gray-800)); }
+
+  /* Brand Color Utilities */
+  .text-teal-500 { color: hsl(var(--teal-500)); }
+  .bg-teal-500 { background-color: hsl(var(--teal-500)); }
+  .border-teal-500 { border-color: hsl(var(--teal-500)); }
+
+  .text-yellow-400 { color: hsl(var(--yellow-400)); }
+  .bg-yellow-400 { background-color: hsl(var(--yellow-400)); }
+  .border-yellow-400 { border-color: hsl(var(--yellow-400)); }
+
+  /* Shadow Utilities */
+  .shadow-subtle { box-shadow: var(--shadow-subtle); }
+  .shadow-medium { box-shadow: var(--shadow-medium); }
+  .shadow-large { box-shadow: var(--shadow-large); }
+
+  /* Border Radius Utilities */
+  .rounded-card { border-radius: var(--radius); }
+  .rounded-input { border-radius: var(--radius-sm); }
+
+  /* Spacing Utilities */
+  .space-grid { gap: var(--spacing-2); }
+  .space-comfortable { gap: var(--spacing-6); }
+  .p-grid { padding: var(--spacing-2); }
+  .p-comfortable { padding: var(--spacing-6); }
+  .m-grid { margin: var(--spacing-2); }
+  .m-comfortable { margin: var(--spacing-6); }
+
+  /* Motion & Interactions */
+  .transition-smooth { 
+    transition: all 200ms ease-out; 
   }
   
-  .bg-you-purple {
-    background-color: hsl(var(--you-purple));
+  .transition-page { 
+    transition: all 400ms ease-in-out; 
+  }
+
+  .hover-lift {
+    @apply transition-smooth;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* Modern Glass Effect */
+  .glass-modern {
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid hsl(var(--border));
+  }
+
+  /* Grid System */
+  .grid-12 {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--spacing-6);
   }
   
-  .border-you-purple {
-    border-color: hsl(var(--you-purple));
+  .col-span-full { grid-column: 1 / -1; }
+  .col-span-half { grid-column: span 6; }
+  .col-span-third { grid-column: span 4; }
+  .col-span-quarter { grid-column: span 3; }
+
+  /* Accessibility Enhancements */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
-  
-  .text-you-blue {
-    color: hsl(var(--you-blue));
+
+  /* Keyboard Navigation */
+  .keyboard-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
-  
-  .bg-you-blue {
-    background-color: hsl(var(--you-blue));
-  }
-  
-  .text-you-green {
-    color: hsl(var(--you-green));
-  }
-  
-  .bg-you-green {
-    background-color: hsl(var(--you-green));
-  }
-  
-  .text-you-orange {
-    color: hsl(var(--you-orange));
-  }
-  
-  .bg-you-orange {
-    background-color: hsl(var(--you-orange));
-  }
-  
-  .text-you-accent {
-    color: hsl(var(--you-accent));
-  }
-  
-  .bg-you-accent {
-    background-color: hsl(var(--you-accent));
-  }
-  
-  .border-you-accent {
-    border-color: hsl(var(--you-accent));
-  }
-  
-  .gradient-you {
-    background: linear-gradient(135deg, hsl(var(--you-accent)), hsl(var(--you-blue)));
-  }
-  
-  .glass-effect {
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
+
+  /* Legacy Support - Gradual Migration */
+  .text-you-purple { color: hsl(var(--teal-500)); }
+  .bg-you-purple { background-color: hsl(var(--teal-500)); }
+  .text-you-blue { color: hsl(var(--teal-500)); }
+  .bg-you-blue { background-color: hsl(var(--teal-500)); }
+  .text-you-green { color: hsl(var(--teal-500)); }
+  .bg-you-green { background-color: hsl(var(--teal-500)); }
+  .text-you-orange { color: hsl(var(--yellow-400)); }
+  .bg-you-orange { background-color: hsl(var(--yellow-400)); }
+  .text-you-accent { color: hsl(var(--accent)); }
+  .bg-you-accent { background-color: hsl(var(--accent)); }
+  .border-you-accent { border-color: hsl(var(--accent)); }
 }

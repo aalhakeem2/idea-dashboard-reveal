@@ -61,12 +61,53 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// World Class Design System Colors
+				gray: {
+					100: 'hsl(var(--gray-100))',
+					200: 'hsl(var(--gray-200))',
+					300: 'hsl(var(--gray-300))',
+					400: 'hsl(var(--gray-400))',
+					500: 'hsl(var(--gray-500))',
+					600: 'hsl(var(--gray-600))',
+					700: 'hsl(var(--gray-700))',
+					800: 'hsl(var(--gray-800))'
+				},
+				teal: {
+					500: 'hsl(var(--teal-500))'
+				},
+				yellow: {
+					400: 'hsl(var(--yellow-400))'
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				// World Class Design System
+				card: 'var(--radius)',
+				input: 'var(--radius-sm)'
+			},
+			spacing: {
+				'grid': 'var(--spacing-2)',
+				'comfortable': 'var(--spacing-6)'
+			},
+			boxShadow: {
+				'subtle': 'var(--shadow-subtle)',
+				'medium': 'var(--shadow-medium)',
+				'large': 'var(--shadow-large)'
+			},
+			fontFamily: {
+				'montserrat': ['Montserrat', 'sans-serif'],
+				'inter': ['Inter', 'sans-serif']
+			},
+			transitionDuration: {
+				'smooth': '200ms',
+				'page': '400ms'
+			},
+			transitionTimingFunction: {
+				'smooth': 'ease-out',
+				'page': 'ease-in-out'
 			},
 			keyframes: {
 				'accordion-down': {
