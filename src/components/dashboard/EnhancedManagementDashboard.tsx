@@ -70,22 +70,35 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
   console.log("EnhancedManagementDashboard: activeView prop:", activeView);
 
   useEffect(() => {
-    calculateStats();
+    if (ideas.length > 0) {
+      calculateStats();
+    }
     if (selectedIdea) {
       fetchEvaluationData(selectedIdea.id);
     }
   }, [ideas, selectedIdea]);
 
-  const calculateStats = () => {
+  const calculateStats = async () => {
     const total = ideas.length;
     const pending = ideas.filter(i => i.status === 'under_review' || i.status === 'submitted').length;
-    const evaluated = ideas.filter(i => i.status === 'evaluated' || i.average_evaluation_score > 0).length;
+    
+    // Count ideas that have evaluations but no management decision
+    let awaitingDecision = 0;
+    for (const idea of ideas) {
+      if ((idea.status === 'under_review' && idea.average_evaluation_score && idea.average_evaluation_score > 0)) {
+        const hasDecision = await hasManagementDecision(idea.id);
+        if (!hasDecision) {
+          awaitingDecision++;
+        }
+      }
+    }
+    
     const approved = ideas.filter(i => i.status === 'approved').length;
     
     setStats({
       totalIdeas: total,
       pendingEvaluation: pending,
-      evaluatedIdeas: evaluated,
+      evaluatedIdeas: awaitingDecision, // Now represents ideas awaiting decision
       approvedIdeas: approved,
       avgEvaluationTime: 3.2, // Mock data
       successRate: total > 0 ? Math.round((approved / total) * 100) : 0
@@ -229,10 +242,10 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground font-medium">{t("completed_today")}</p>
-                <p className="text-3xl font-bold text-green-600">{stats.evaluatedIdeas}</p>
+                <p className="text-sm text-muted-foreground font-medium">{language === 'ar' ? 'في انتظار القرار' : 'Awaiting Decision'}</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.evaluatedIdeas}</p>
               </div>
-              <CheckCircle2 className="h-10 w-10 text-green-500" />
+              <FileCheck className="h-10 w-10 text-blue-500" />
             </div>
           </CardContent>
         </Card>
