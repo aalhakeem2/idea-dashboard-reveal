@@ -160,18 +160,30 @@ export const EnhancedManagementDashboard: React.FC<EnhancedManagementDashboardPr
   // Check which ideas need decisions vs those already decided
   useEffect(() => {
     const checkDecisionStatus = async () => {
+      // All ideas that have been decided (approved, rejected, implemented)
+      const decidedStatusIdeas = ideas.filter(idea => 
+        idea.status === 'approved' || 
+        idea.status === 'rejected' || 
+        idea.status === 'implemented' ||
+        idea.status === 'archived'
+      );
+
+      // Ideas that have evaluations and might need decisions
       const evaluatedIdeas = ideas.filter(idea => 
         (idea.status === 'under_review' && idea.average_evaluation_score && idea.average_evaluation_score > 0) ||
         idea.status === 'evaluated'
       );
 
       const pending: any[] = [];
-      const decided: any[] = [];
+      const decided: any[] = [...decidedStatusIdeas]; // Start with status-based decided ideas
 
       for (const idea of evaluatedIdeas) {
         const hasDecision = await hasManagementDecision(idea.id);
-        if (hasDecision || idea.status === 'approved' || idea.status === 'rejected') {
-          decided.push(idea);
+        if (hasDecision) {
+          // Only add to decided if not already included by status
+          if (!decided.find(d => d.id === idea.id)) {
+            decided.push(idea);
+          }
         } else {
           pending.push(idea);
         }
