@@ -11,6 +11,8 @@ import { useListOfValues } from "@/hooks/useListOfValues";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { IdeaDetailsPanel } from "./IdeaDetailsPanel";
+import { EvaluatorFeedbackPanel } from "./EvaluatorFeedbackPanel";
 
 interface ManagementDecisionPanelProps {
   ideaId: string;
@@ -43,6 +45,11 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
   const [conditionsAr, setConditionsAr] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [evaluationSummary, setEvaluationSummary] = useState<any>(null);
+  const [ideaDetails, setIdeaDetails] = useState<any>(null);
+  const [submitterProfile, setSubmitterProfile] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [isIdeaDetailsExpanded, setIsIdeaDetailsExpanded] = useState(false);
+  const [isEvaluatorFeedbackExpanded, setIsEvaluatorFeedbackExpanded] = useState(true);
 
   const decisionOptions = [
     { value: "approved", label: t("approve"), icon: CheckCircle, color: "success" },
@@ -54,6 +61,8 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
   useEffect(() => {
     if (ideaId) {
       fetchEvaluationSummary();
+      fetchIdeaDetails();
+      fetchCurrentUserProfile();
     }
   }, [ideaId]);
 
@@ -102,6 +111,54 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
       });
     } catch (error) {
       console.error("Error fetching evaluation summary:", error);
+    }
+  };
+
+  const fetchIdeaDetails = async () => {
+    try {
+      const { data: idea, error } = await supabase
+        .from("ideas")
+        .select("*")
+        .eq("id", ideaId)
+        .single();
+
+      if (error) throw error;
+
+      setIdeaDetails(idea);
+
+      // Fetch submitter profile
+      if (idea.submitter_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", idea.submitter_id)
+          .single();
+
+        if (!profileError) {
+          setSubmitterProfile(profile);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching idea details:", error);
+    }
+  };
+
+  const fetchCurrentUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (!error) {
+        setCurrentUserProfile(profile);
+      }
+    } catch (error) {
+      console.error("Error fetching current user profile:", error);
     }
   };
 
@@ -189,13 +246,13 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
         <p className="text-sm text-muted-foreground">{ideaTitle}</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Evaluation Summary */}
+        {/* Quick Evaluation Summary */}
         {evaluationSummary && (
           <div className="space-y-4 p-4 bg-muted/20 rounded-lg">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
-                {language === 'ar' ? 'ملخص التقييم' : 'Evaluation Summary'}
+                {language === 'ar' ? 'ملخص التقييم السريع' : 'Quick Evaluation Summary'}
               </h4>
               <Badge variant="outline">
                 {evaluationSummary.completed}/{evaluationSummary.total} {language === 'ar' ? 'مكتمل' : 'Completed'}
@@ -222,26 +279,31 @@ export const ManagementDecisionPanel: React.FC<ManagementDecisionPanelProps> = (
                 </div>
               </div>
             )}
-
-            {/* Evaluator Status */}
-            <div className="space-y-2">
-              <h5 className="font-medium text-sm">{language === 'ar' ? 'حالة المقيمين' : 'Evaluator Status'}</h5>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {evaluationSummary.evaluations.map((evaluation: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-background rounded text-xs">
-                    <span className="font-medium">{evaluation.type}</span>
-                    <Badge variant={evaluation.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                      {evaluation.status === 'completed' ? 
-                        `${evaluation.score}/10` : 
-                        (language === 'ar' ? 'في الانتظار' : 'Pending')
-                      }
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
+
+        {/* Drill-Down Panels */}
+        <div className="space-y-4">
+          {/* Detailed Evaluator Feedback */}
+          {evaluationSummary && (
+            <EvaluatorFeedbackPanel
+              evaluationSummary={evaluationSummary}
+              isExpanded={isEvaluatorFeedbackExpanded}
+              onToggle={() => setIsEvaluatorFeedbackExpanded(!isEvaluatorFeedbackExpanded)}
+            />
+          )}
+
+          {/* Complete Idea Details */}
+          {ideaDetails && (
+            <IdeaDetailsPanel
+              idea={ideaDetails}
+              submitterProfile={submitterProfile}
+              currentUserProfile={currentUserProfile}
+              isExpanded={isIdeaDetailsExpanded}
+              onToggle={() => setIsIdeaDetailsExpanded(!isIdeaDetailsExpanded)}
+            />
+          )}
+        </div>
 
         {/* Decision Type Selection */}
         <div className="space-y-3">
