@@ -180,21 +180,22 @@ export const EvaluatorFeedbackPanel: React.FC<EvaluatorFeedbackPanelProps> = ({
               </div>
             )}
 
-            {/* Individual Evaluator Cards - Stacked Layout */}
+            {/* Individual Evaluator Cards - Full Width Layout */}
             <div className="space-y-6">
               <h4 className="font-semibold text-base">{language === 'ar' ? 'تقييمات فردية' : 'Individual Evaluations'}</h4>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {evaluationSummary.evaluations.map((evaluation: any, index: number) => (
-                  <EvaluatorCard 
-                    key={index} 
-                    evaluation={evaluation} 
-                    index={index}
-                    language={language}
-                    getEvaluationTypeIcon={getEvaluationTypeIcon}
-                    getRecommendationIcon={getRecommendationIcon}
-                    getRecommendationLabel={getRecommendationLabel}
-                    getRecommendationColor={getRecommendationColor}
-                  />
+                  <div key={index} className="w-full">
+                    <EvaluatorCard 
+                      evaluation={evaluation} 
+                      index={index}
+                      language={language}
+                      getEvaluationTypeIcon={getEvaluationTypeIcon}
+                      getRecommendationIcon={getRecommendationIcon}
+                      getRecommendationLabel={getRecommendationLabel}
+                      getRecommendationColor={getRecommendationColor}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
