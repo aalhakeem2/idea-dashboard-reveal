@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -14,7 +14,9 @@ import {
   AlertCircle,
   CheckCircle,
   TrendingUp,
-  BarChart3
+  BarChart3,
+  MessageSquare,
+  Eye
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -178,60 +180,21 @@ export const EvaluatorFeedbackPanel: React.FC<EvaluatorFeedbackPanelProps> = ({
               </div>
             )}
 
-            {/* Individual Evaluator Cards */}
-            <div className="space-y-4">
-              <h4 className="font-semibold">{language === 'ar' ? 'تقييمات فردية' : 'Individual Evaluations'}</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Individual Evaluator Cards - Stacked Layout */}
+            <div className="space-y-6">
+              <h4 className="font-semibold text-base">{language === 'ar' ? 'تقييمات فردية' : 'Individual Evaluations'}</h4>
+              <div className="space-y-4">
                 {evaluationSummary.evaluations.map((evaluation: any, index: number) => (
-                  <Card key={index} className="border-border/50">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{getEvaluationTypeIcon(evaluation.type)}</span>
-                          <span className="font-medium capitalize">{evaluation.type}</span>
-                        </div>
-                        <Badge 
-                          variant={evaluation.status === 'completed' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {evaluation.status === 'completed' ? 
-                            `${evaluation.score}/10` : 
-                            (language === 'ar' ? 'في الانتظار' : 'Pending')
-                          }
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    
-                    {evaluation.status === 'completed' && (
-                      <CardContent className="space-y-3">
-                        {evaluation.recommendation && (
-                          <div className="flex items-center gap-2">
-                            {getRecommendationIcon(evaluation.recommendation)}
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs ${getRecommendationColor(evaluation.recommendation)}`}
-                            >
-                              {getRecommendationLabel(evaluation.recommendation)}
-                            </Badge>
-                          </div>
-                        )}
-                        
-                        {evaluation.feedback && (
-                          <div className="space-y-1">
-                            <span className="text-xs font-medium text-muted-foreground">
-                              {language === 'ar' ? 'التعليقات:' : 'Feedback:'}
-                            </span>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              {evaluation.feedback.length > 150 
-                                ? `${evaluation.feedback.substring(0, 150)}...` 
-                                : evaluation.feedback
-                              }
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    )}
-                  </Card>
+                  <EvaluatorCard 
+                    key={index} 
+                    evaluation={evaluation} 
+                    index={index}
+                    language={language}
+                    getEvaluationTypeIcon={getEvaluationTypeIcon}
+                    getRecommendationIcon={getRecommendationIcon}
+                    getRecommendationLabel={getRecommendationLabel}
+                    getRecommendationColor={getRecommendationColor}
+                  />
                 ))}
               </div>
             </div>
@@ -239,5 +202,124 @@ export const EvaluatorFeedbackPanel: React.FC<EvaluatorFeedbackPanelProps> = ({
         </CollapsibleContent>
       </Card>
     </Collapsible>
+  );
+};
+
+// Enhanced Evaluator Card Component with Progressive Disclosure
+interface EvaluatorCardProps {
+  evaluation: any;
+  index: number;
+  language: string;
+  getEvaluationTypeIcon: (type: string) => string;
+  getRecommendationIcon: (recommendation: string) => JSX.Element;
+  getRecommendationLabel: (recommendation: string) => string;
+  getRecommendationColor: (recommendation: string) => string;
+}
+
+const EvaluatorCard: React.FC<EvaluatorCardProps> = ({
+  evaluation,
+  index,
+  language,
+  getEvaluationTypeIcon,
+  getRecommendationIcon,
+  getRecommendationLabel,
+  getRecommendationColor
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <Card className="border-border transition-all duration-200 hover:shadow-md">
+      {/* Summary View - Always Visible */}
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+              <span className="text-xl">{getEvaluationTypeIcon(evaluation.type)}</span>
+            </div>
+            <div>
+              <h5 className="font-semibold text-base capitalize">{evaluation.type} {language === 'ar' ? 'تقييم' : 'Evaluation'}</h5>
+              <p className="text-sm text-muted-foreground">
+                {evaluation.status === 'completed' ? 
+                  (language === 'ar' ? 'مكتمل' : 'Completed') : 
+                  (language === 'ar' ? 'في الانتظار' : 'Pending')
+                }
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {evaluation.status === 'completed' && (
+              <>
+                {/* Score Badge */}
+                <Badge variant="secondary" className="text-sm font-bold">
+                  {evaluation.score}/10
+                </Badge>
+                
+                {/* Recommendation Badge */}
+                {evaluation.recommendation && (
+                  <div className="flex items-center gap-2">
+                    {getRecommendationIcon(evaluation.recommendation)}
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${getRecommendationColor(evaluation.recommendation)}`}
+                    >
+                      {getRecommendationLabel(evaluation.recommendation)}
+                    </Badge>
+                  </div>
+                )}
+              </>
+            )}
+            
+            {/* Expand Button */}
+            {evaluation.status === 'completed' && evaluation.feedback && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="h-8 w-8 p-0"
+              >
+                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      
+      {/* Detailed View - Expandable */}
+      {evaluation.status === 'completed' && evaluation.feedback && (
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          <CollapsibleContent>
+            <CardContent className="pt-0 space-y-4 border-t border-border/50">
+              {/* Detailed Feedback */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {language === 'ar' ? 'التعليقات التفصيلية' : 'Detailed Feedback'}
+                  </span>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-4">
+                  <p className="text-sm leading-relaxed text-foreground">
+                    {evaluation.feedback}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Additional Metrics if Available */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="font-bold text-lg">{evaluation.score}</div>
+                  <div className="text-xs text-muted-foreground">{language === 'ar' ? 'النقاط الإجمالية' : 'Overall Score'}</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg border">
+                  <div className="font-bold text-lg">{evaluation.recommendation ? '✓' : '—'}</div>
+                  <div className="text-xs text-muted-foreground">{language === 'ar' ? 'التوصية' : 'Recommendation'}</div>
+                </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+    </Card>
   );
 };
