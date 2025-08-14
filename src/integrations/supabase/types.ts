@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_types: {
+        Row: {
+          badge_color: string | null
+          badge_icon: string | null
+          category: string
+          created_at: string | null
+          criteria: Json | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          points_required: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          badge_color?: string | null
+          badge_icon?: string | null
+          category: string
+          created_at?: string | null
+          criteria?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          points_required?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          badge_color?: string | null
+          badge_icon?: string | null
+          category?: string
+          created_at?: string | null
+          criteria?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          points_required?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       evaluations: {
         Row: {
           created_at: string | null
@@ -424,6 +466,57 @@ export type Database = {
         }
         Relationships: []
       }
+      points_history: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          earned_at: string | null
+          id: string
+          points: number
+          related_achievement_id: string | null
+          related_idea_id: string | null
+          submitter_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          earned_at?: string | null
+          id?: string
+          points: number
+          related_achievement_id?: string | null
+          related_idea_id?: string | null
+          submitter_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          earned_at?: string | null
+          id?: string
+          points?: number
+          related_achievement_id?: string | null
+          related_idea_id?: string | null
+          submitter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_history_related_achievement_id_fkey"
+            columns: ["related_achievement_id"]
+            isOneToOne: false
+            referencedRelation: "submitter_achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_history_related_idea_id_fkey"
+            columns: ["related_idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           blocked_at: string | null
@@ -511,6 +604,189 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recognition_events: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          event_date: string
+          event_details: Json | null
+          event_type: string
+          id: string
+          recipients: string[] | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          event_date: string
+          event_details?: Json | null
+          event_type: string
+          id?: string
+          recipients?: string[] | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          event_date?: string
+          event_details?: Json | null
+          event_type?: string
+          id?: string
+          recipients?: string[] | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reward_categories: {
+        Row: {
+          created_at: string | null
+          criteria: Json
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          reward_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          criteria: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          reward_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          reward_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      submitter_achievements: {
+        Row: {
+          achievement_type_id: string
+          awarded_by: string | null
+          created_at: string | null
+          earned_at: string | null
+          id: string
+          notes: string | null
+          points_earned: number | null
+          related_idea_id: string | null
+          submitter_id: string
+        }
+        Insert: {
+          achievement_type_id: string
+          awarded_by?: string | null
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          notes?: string | null
+          points_earned?: number | null
+          related_idea_id?: string | null
+          submitter_id: string
+        }
+        Update: {
+          achievement_type_id?: string
+          awarded_by?: string | null
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          notes?: string | null
+          points_earned?: number | null
+          related_idea_id?: string | null
+          submitter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submitter_achievements_achievement_type_id_fkey"
+            columns: ["achievement_type_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submitter_achievements_related_idea_id_fkey"
+            columns: ["related_idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submitter_rankings: {
+        Row: {
+          created_at: string | null
+          department_rank: number | null
+          id: string
+          ideas_approved: number | null
+          ideas_implemented: number | null
+          ideas_submitted: number | null
+          innovation_score: number | null
+          overall_rank: number | null
+          period_end: string
+          period_start: string
+          period_type: string
+          productivity_score: number | null
+          quality_score: number | null
+          submitter_id: string
+          total_points: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department_rank?: number | null
+          id?: string
+          ideas_approved?: number | null
+          ideas_implemented?: number | null
+          ideas_submitted?: number | null
+          innovation_score?: number | null
+          overall_rank?: number | null
+          period_end: string
+          period_start: string
+          period_type: string
+          productivity_score?: number | null
+          quality_score?: number | null
+          submitter_id: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department_rank?: number | null
+          id?: string
+          ideas_approved?: number | null
+          ideas_implemented?: number | null
+          ideas_submitted?: number | null
+          innovation_score?: number | null
+          overall_rank?: number | null
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          productivity_score?: number | null
+          quality_score?: number | null
+          submitter_id?: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       translations: {
         Row: {
@@ -605,6 +881,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      award_points: {
+        Args: {
+          p_submitter_id: string
+          p_points: number
+          p_activity_type: string
+          p_description?: string
+          p_related_idea_id?: string
+        }
+        Returns: undefined
+      }
       calculate_average_evaluation_score: {
         Args: { idea_uuid: string }
         Returns: number
@@ -618,6 +904,22 @@ export type Database = {
           overall_average: number
           enrichment_average: number
         }[]
+      }
+      calculate_submitter_metrics: {
+        Args: { p_submitter_id: string }
+        Returns: {
+          total_ideas: number
+          approved_ideas: number
+          implemented_ideas: number
+          avg_quality_score: number
+          avg_innovation_score: number
+          total_points: number
+          current_level: string
+        }[]
+      }
+      calculate_submitter_total_points: {
+        Args: { p_submitter_id: string }
+        Returns: number
       }
       generate_idea_reference_code: {
         Args: Record<PropertyKey, never>
