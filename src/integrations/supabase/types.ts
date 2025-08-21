@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -866,28 +866,28 @@ export type Database = {
     }
     Functions: {
       admin_require_password_reset: {
-        Args: { p_user_id: string; p_reason?: string }
+        Args: { p_reason?: string; p_user_id: string }
         Returns: undefined
       }
       admin_toggle_user_status: {
-        Args: { p_user_id: string; p_is_active: boolean; p_reason?: string }
+        Args: { p_is_active: boolean; p_reason?: string; p_user_id: string }
         Returns: undefined
       }
       admin_update_user_role: {
         Args: {
-          p_user_id: string
           p_new_role: Database["public"]["Enums"]["user_role"]
           p_specialization?: Database["public"]["Enums"]["evaluation_type"][]
+          p_user_id: string
         }
         Returns: undefined
       }
       award_points: {
         Args: {
-          p_submitter_id: string
-          p_points: number
           p_activity_type: string
           p_description?: string
+          p_points: number
           p_related_idea_id?: string
+          p_submitter_id: string
         }
         Returns: undefined
       }
@@ -898,23 +898,23 @@ export type Database = {
       calculate_comprehensive_evaluation_score: {
         Args: { idea_uuid: string }
         Returns: {
-          technology_score: number
-          finance_score: number
           commercial_score: number
-          overall_average: number
           enrichment_average: number
+          finance_score: number
+          overall_average: number
+          technology_score: number
         }[]
       }
       calculate_submitter_metrics: {
         Args: { p_submitter_id: string }
         Returns: {
-          total_ideas: number
           approved_ideas: number
-          implemented_ideas: number
-          avg_quality_score: number
           avg_innovation_score: number
-          total_points: number
+          avg_quality_score: number
           current_level: string
+          implemented_ideas: number
+          total_ideas: number
+          total_points: number
         }[]
       }
       calculate_submitter_total_points: {
@@ -928,10 +928,10 @@ export type Database = {
       get_evaluation_progress: {
         Args: { p_idea_id: string }
         Returns: {
+          missing_types: Database["public"]["Enums"]["evaluation_type"][]
+          progress_percentage: number
           total_assigned: number
           total_completed: number
-          progress_percentage: number
-          missing_types: Database["public"]["Enums"]["evaluation_type"][]
         }[]
       }
       get_user_role: {
@@ -940,17 +940,17 @@ export type Database = {
       }
       log_idea_action: {
         Args: {
-          p_idea_id: string
-          p_action_type: string
           p_action_detail?: string
+          p_action_type: string
+          p_idea_id: string
         }
         Returns: undefined
       }
       log_user_management_action: {
         Args: {
-          p_target_user_id: string
-          p_action_type: string
           p_action_details?: Json
+          p_action_type: string
+          p_target_user_id: string
         }
         Returns: undefined
       }
