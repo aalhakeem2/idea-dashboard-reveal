@@ -19,7 +19,7 @@ export const AuthPage = () => {
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
 
-  // Test user accounts with standardized password
+  // Test user accounts with secure password
   const testUsers = [
     { 
       email: "hani.gazim@gmail.com", 
@@ -27,7 +27,7 @@ export const AuthPage = () => {
       role: "Submitter",
       userRole: "submitter" as const,
       id: "11111111-1111-1111-1111-111111111111",
-      password: "Abdu123+++"
+      password: "TestPass123!"
     },
     { 
       email: "evaluator@you.com", 
@@ -35,7 +35,7 @@ export const AuthPage = () => {
       role: "Evaluator 1",
       userRole: "evaluator" as const,
       id: "f506d6d7-bae4-4268-88c6-88cfb194dd7f",
-      password: "Abdu123+++"
+      password: "TestPass123!"
     },
     { 
       email: "alhakeem006644@gmail.com", 
@@ -43,7 +43,7 @@ export const AuthPage = () => {
       role: "Evaluator 2",
       userRole: "evaluator" as const,
       id: "91214bfa-111d-4fc4-8cec-af7bbe97374d",
-      password: "Abdu123+++"
+      password: "TestPass123!"
     },
     { 
       email: "test@you.com", 
@@ -51,7 +51,7 @@ export const AuthPage = () => {
       role: "Evaluator 3",
       userRole: "evaluator" as const,
       id: "e4f73997-7a96-4bc2-95a6-37be29539adc",
-      password: "Abdu123+++"
+      password: "TestPass123!"
     },
     { 
       email: "osama.murshed@gmail.com", 
@@ -59,7 +59,7 @@ export const AuthPage = () => {
       role: "Management",
       userRole: "management" as const,
       id: "33333333-3333-3333-3333-333333333333",
-      password: "Abdu123+++"
+      password: "TestPass123!"
     },
     { 
       email: "admin@you.com", 
@@ -67,7 +67,7 @@ export const AuthPage = () => {
       role: "Admin",
       userRole: "management" as const,
       id: "44444444-4444-4444-4444-444444444444",
-      password: "Abdu123+++"
+      password: "TestPass123!"
     },
   ];
 
@@ -86,8 +86,7 @@ export const AuthPage = () => {
           data: {
             full_name: fullName,
           },
-          // Completely disable email confirmation
-          emailRedirectTo: undefined,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
@@ -103,7 +102,12 @@ export const AuthPage = () => {
             password,
           });
 
-          if (signInError) throw signInError;
+          if (signInError) {
+            if (signInError.message.includes('Invalid login credentials')) {
+              throw new Error("Email is registered but password is incorrect. Please try signing in with the correct password.");
+            }
+            throw signInError;
+          }
 
           toast({
             title: "Signed In Successfully!",
@@ -167,84 +171,72 @@ export const AuthPage = () => {
     try {
       console.log(`Attempting login for ${testUser.name} (${testUser.email})`);
       
-      // Check if user exists in profiles table first
-      const { data: existingProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name')
-        .eq('email', testUser.email)
-        .single();
+      // Always try to sign in first - this is the most reliable approach
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: testUser.email,
+        password: testUser.password,
+      });
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        // PGRST116 is "not found" error, which is expected for new users
-        throw new Error(`Profile check failed: ${profileError.message}`);
-      }
-
-      if (existingProfile) {
-        // User exists, attempt sign in only
-        console.log(`User ${testUser.email} exists, attempting sign in...`);
+      if (signInError) {
+        console.log(`Sign in failed for ${testUser.email}:`, signInError.message);
         
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: testUser.email,
-          password: testUser.password,
-        });
+        // Only create user if the credentials are invalid (user doesn't exist)
+        if (signInError.message.includes('Invalid login credentials')) {
+          console.log(`User ${testUser.email} doesn't exist, creating new user...`);
+          
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: testUser.email,
+            password: testUser.password,
+            options: {
+              data: {
+                full_name: testUser.name,
+              },
+              emailRedirectTo: `${window.location.origin}/`,
+            },
+          });
 
-        if (signInError) {
-          console.error(`Sign in failed for ${testUser.email}:`, signInError.message);
-          
-          // If password is wrong, we might need to reset it or use a different approach
-          if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error(`Login failed: Please check the password for ${testUser.name}. You may need to reset the password or contact support.`);
+          if (signUpError) {
+            console.error(`Sign up failed for ${testUser.email}:`, signUpError.message);
+            
+            // If user already exists during signup, that means the password was wrong
+            if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
+              throw new Error(`User ${testUser.name} exists but password is incorrect. Please contact support to reset the password.`);
+            }
+            
+            throw new Error(`Failed to create user: ${signUpError.message}`);
           }
-          
+
+          console.log(`User created successfully for ${testUser.name}`);
+
+          // Wait a moment for profile creation trigger
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Sign in after creation
+          const { error: finalSignInError } = await supabase.auth.signInWithPassword({
+            email: testUser.email,
+            password: testUser.password,
+          });
+
+          if (finalSignInError) {
+            console.error(`Final sign in failed for ${testUser.email}:`, finalSignInError.message);
+            throw new Error(`Login after creation failed: ${finalSignInError.message}`);
+          }
+
+          console.log(`Complete setup successful for ${testUser.name}`);
+          toast({
+            title: "Account Created & Login Successful",
+            description: `Created account and logged in as ${testUser.name} (${testUser.role})`,
+          });
+        } else {
+          // Other sign-in errors (network, etc.)
           throw new Error(`Sign in failed: ${signInError.message}`);
         }
-        
+      } else {
+        // Sign in was successful
         console.log(`Sign in successful for ${testUser.name}`);
         toast({
           title: "Login Successful",
           description: `Logged in as ${testUser.name} (${testUser.role})`,
-        });
-      } else {
-        // User doesn't exist, create new user
-        console.log(`User ${testUser.email} doesn't exist, creating new user...`);
-        
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: testUser.email,
-          password: testUser.password,
-          options: {
-            data: {
-              full_name: testUser.name,
-            },
-            // Disable email confirmation completely
-            emailRedirectTo: undefined,
-          },
-        });
-
-        if (signUpError) {
-          console.error(`Sign up failed for ${testUser.email}:`, signUpError.message);
-          throw new Error(`Failed to create user: ${signUpError.message}`);
-        }
-
-        console.log(`User created successfully for ${testUser.name}`);
-
-        // Wait a moment for profile creation trigger
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Sign in after creation
-        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
-          email: testUser.email,
-          password: testUser.password,
-        });
-
-        if (finalSignInError) {
-          console.error(`Final sign in failed for ${testUser.email}:`, finalSignInError.message);
-          throw new Error(`Login after creation failed: ${finalSignInError.message}`);
-        }
-
-        console.log(`Complete setup successful for ${testUser.name}`);
-        toast({
-          title: "Account Created & Login Successful",
-          description: `Created account and logged in as ${testUser.name} (${testUser.role})`,
         });
       }
     } catch (error: any) {
@@ -268,7 +260,7 @@ export const AuthPage = () => {
     setLoading(true);
     try {
       const adminEmail = "admin@browse.com";
-      const adminPassword = "BrowseAdmin123";
+      const adminPassword = "SecureBrowse456!";
       
       console.log("Browse as Admin: Starting admin login process");
       
@@ -279,44 +271,47 @@ export const AuthPage = () => {
       });
 
       if (signInError) {
-        console.log("Admin user doesn't exist, creating admin account...");
-        
-        // Create admin user with no email confirmation
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: adminEmail,
-          password: adminPassword,
-          options: {
-            data: {
-              full_name: "Browse Admin",
+        if (signInError.message.includes('Invalid login credentials')) {
+          console.log("Admin user doesn't exist, creating admin account...");
+          
+          // Create admin user
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: adminEmail,
+            password: adminPassword,
+            options: {
+              data: {
+                full_name: "Browse Admin",
+              },
+              emailRedirectTo: `${window.location.origin}/`,
             },
-            // Completely disable email confirmation
-            emailRedirectTo: undefined,
-          },
-        });
+          });
 
-        if (signUpError) {
-          console.error("Admin creation error:", signUpError);
-          
-          // If user already exists but password is wrong, show specific error
-          if (signUpError.message.includes('already registered')) {
-            throw new Error("Admin account exists but password is incorrect. Please contact support.");
+          if (signUpError) {
+            console.error("Admin creation error:", signUpError);
+            
+            // If user already exists but password is wrong, show specific error
+            if (signUpError.message.includes('already registered')) {
+              throw new Error("Admin account exists but password is incorrect. Please contact support.");
+            }
+            
+            throw new Error(`Failed to create admin user: ${signUpError.message}`);
           }
-          
-          throw new Error(`Failed to create admin user: ${signUpError.message}`);
-        }
 
-        console.log("Admin user created successfully");
+          console.log("Admin user created successfully");
 
-        // Wait for profile creation and then try to sign in
-        await new Promise(resolve => setTimeout(resolve, 1500));
+          // Wait for profile creation and then try to sign in
+          await new Promise(resolve => setTimeout(resolve, 1500));
 
-        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
-          email: adminEmail,
-          password: adminPassword,
-        });
+          const { error: finalSignInError } = await supabase.auth.signInWithPassword({
+            email: adminEmail,
+            password: adminPassword,
+          });
 
-        if (finalSignInError) {
-          throw new Error(`Admin login failed after creation: ${finalSignInError.message}`);
+          if (finalSignInError) {
+            throw new Error(`Admin login failed after creation: ${finalSignInError.message}`);
+          }
+        } else {
+          throw signInError;
         }
       }
       
