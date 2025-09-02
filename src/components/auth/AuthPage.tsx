@@ -171,7 +171,7 @@ export const AuthPage = () => {
     try {
       console.log(`Attempting login for ${testUser.name} (${testUser.email})`);
       
-      // Always try to sign in first - this is the most reliable approach
+      // Always try to sign in first
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: testUser.email,
         password: testUser.password,
@@ -180,9 +180,9 @@ export const AuthPage = () => {
       if (signInError) {
         console.log(`Sign in failed for ${testUser.email}:`, signInError.message);
         
-        // Only create user if the credentials are invalid (user doesn't exist)
+        // If credentials are invalid, try to create the user
         if (signInError.message.includes('Invalid login credentials')) {
-          console.log(`User ${testUser.email} doesn't exist, creating new user...`);
+          console.log(`User ${testUser.email} doesn't exist or has wrong password, trying to create...`);
           
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: testUser.email,
@@ -198,9 +198,27 @@ export const AuthPage = () => {
           if (signUpError) {
             console.error(`Sign up failed for ${testUser.email}:`, signUpError.message);
             
-            // If user already exists during signup, that means the password was wrong
+            // If user already exists but password is wrong, attempt password reset
             if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
-              throw new Error(`User ${testUser.name} exists but password is incorrect. Please contact support to reset the password.`);
+              console.log(`User exists with different password, attempting password reset...`);
+              
+              try {
+                // Attempt to reset password for test user
+                const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+                  testUser.email,
+                  { 
+                    redirectTo: `${window.location.origin}/reset-password?testUser=true&newPassword=${encodeURIComponent(testUser.password)}` 
+                  }
+                );
+
+                if (resetError) {
+                  throw new Error(`Password reset failed: ${resetError.message}`);
+                }
+
+                throw new Error(`User ${testUser.name} exists but with different password. A password reset email has been sent. For testing purposes, you may need to delete this user from Supabase Auth dashboard and try again.`);
+              } catch (resetError: any) {
+                throw new Error(`User ${testUser.name} exists but password is incorrect. Please delete this user from Supabase Auth dashboard (${testUser.email}) and try again, or contact support.`);
+              }
             }
             
             throw new Error(`Failed to create user: ${signUpError.message}`);
@@ -208,7 +226,7 @@ export const AuthPage = () => {
 
           console.log(`User created successfully for ${testUser.name}`);
 
-          // Wait a moment for profile creation trigger
+          // Wait for profile creation trigger
           await new Promise(resolve => setTimeout(resolve, 1000));
 
           // Sign in after creation
