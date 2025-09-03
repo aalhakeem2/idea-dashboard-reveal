@@ -27,7 +27,7 @@ export const AuthPage = () => {
       role: "Submitter",
       userRole: "submitter" as const,
       id: "11111111-1111-1111-1111-111111111111",
-      password: "TestPass123!"
+      password: "Abdu123+++"
     },
     { 
       email: "evaluator@you.com", 
@@ -35,7 +35,7 @@ export const AuthPage = () => {
       role: "Evaluator 1",
       userRole: "evaluator" as const,
       id: "f506d6d7-bae4-4268-88c6-88cfb194dd7f",
-      password: "TestPass123!"
+      password: "Abdu123+++"
     },
     { 
       email: "alhakeem006644@gmail.com", 
@@ -43,7 +43,7 @@ export const AuthPage = () => {
       role: "Evaluator 2",
       userRole: "evaluator" as const,
       id: "91214bfa-111d-4fc4-8cec-af7bbe97374d",
-      password: "TestPass123!"
+      password: "Abdu123+++"
     },
     { 
       email: "test@you.com", 
@@ -51,7 +51,7 @@ export const AuthPage = () => {
       role: "Evaluator 3",
       userRole: "evaluator" as const,
       id: "e4f73997-7a96-4bc2-95a6-37be29539adc",
-      password: "TestPass123!"
+      password: "Abdu123+++"
     },
     { 
       email: "osama.murshed@gmail.com", 
@@ -59,7 +59,7 @@ export const AuthPage = () => {
       role: "Management",
       userRole: "management" as const,
       id: "33333333-3333-3333-3333-333333333333",
-      password: "TestPass123!"
+      password: "Abdu123+++"
     },
     { 
       email: "admin@you.com", 
@@ -67,7 +67,7 @@ export const AuthPage = () => {
       role: "Admin",
       userRole: "management" as const,
       id: "44444444-4444-4444-4444-444444444444",
-      password: "TestPass123!"
+      password: "Abdu123+++"
     },
   ];
 
@@ -180,9 +180,9 @@ export const AuthPage = () => {
       if (signInError) {
         console.log(`Sign in failed for ${testUser.email}:`, signInError.message);
         
-        // If credentials are invalid, try to create the user
+        // If user doesn't exist, create them
         if (signInError.message.includes('Invalid login credentials')) {
-          console.log(`User ${testUser.email} doesn't exist or has wrong password, trying to create...`);
+          console.log(`User ${testUser.email} doesn't exist, creating new user...`);
           
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: testUser.email,
@@ -198,27 +198,8 @@ export const AuthPage = () => {
           if (signUpError) {
             console.error(`Sign up failed for ${testUser.email}:`, signUpError.message);
             
-            // If user already exists but password is wrong, attempt password reset
             if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
-              console.log(`User exists with different password, attempting password reset...`);
-              
-              try {
-                // Attempt to reset password for test user
-                const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-                  testUser.email,
-                  { 
-                    redirectTo: `${window.location.origin}/reset-password?testUser=true&newPassword=${encodeURIComponent(testUser.password)}` 
-                  }
-                );
-
-                if (resetError) {
-                  throw new Error(`Password reset failed: ${resetError.message}`);
-                }
-
-                throw new Error(`User ${testUser.name} exists but with different password. A password reset email has been sent. For testing purposes, you may need to delete this user from Supabase Auth dashboard and try again.`);
-              } catch (resetError: any) {
-                throw new Error(`User ${testUser.name} exists but password is incorrect. Please delete this user from Supabase Auth dashboard (${testUser.email}) and try again, or contact support.`);
-              }
+              throw new Error(`User ${testUser.name} already exists but password doesn't match. Since database passwords were updated to "Abdu123+++", please contact admin to verify the password.`);
             }
             
             throw new Error(`Failed to create user: ${signUpError.message}`);
@@ -278,7 +259,7 @@ export const AuthPage = () => {
     setLoading(true);
     try {
       const adminEmail = "admin@browse.com";
-      const adminPassword = "SecureBrowse456!";
+      const adminPassword = "Abdu123+++";
       
       console.log("Browse as Admin: Starting admin login process");
       
