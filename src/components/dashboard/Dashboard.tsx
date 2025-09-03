@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Database, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SearchFilterProvider } from "@/contexts/SearchFilterContext";
+import { ProfessionalFooter } from "@/components/common/ProfessionalFooter";
 
 type Profile = Tables<"profiles">;
 
@@ -170,6 +171,7 @@ export const Dashboard = ({ user }: DashboardProps) => {
             
             {renderDashboard()}
           </main>
+          <ProfessionalFooter />
         </div>
       </div>
     </SearchFilterProvider>

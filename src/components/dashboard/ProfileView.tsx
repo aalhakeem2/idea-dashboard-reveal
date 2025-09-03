@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { ProfilePictureUpload } from "./ProfilePictureUpload";
+import { ProfessionalFooter } from "@/components/common/ProfessionalFooter";
 
 type Profile = Tables<"profiles">;
 
@@ -307,6 +308,7 @@ export const ProfileView = ({ profile, onProfileUpdate }: ProfileViewProps) => {
           </div>
         </div>
       </div>
+      <ProfessionalFooter />
     </div>
   );
 };

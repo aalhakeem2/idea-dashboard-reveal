@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Lightbulb, Users, BarChart3, Zap, TestTube, AlertCircle, UserCog } from "lucide-react";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ProfessionalFooter } from "@/components/common/ProfessionalFooter";
 
 export const AuthPage = () => {
   const [loading, setLoading] = useState(false);
@@ -558,6 +559,7 @@ export const AuthPage = () => {
           </CardContent>
         </Card>
       </div>
+      <ProfessionalFooter />
     </div>
   );
 };
